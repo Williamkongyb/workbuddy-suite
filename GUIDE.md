@@ -1,10 +1,12 @@
-# WorkBuddy 统一调度中心 - 使用说明书
+# Synapse 调度中心 — 使用说明书
+
+> 系统: Synapse（赛纳普斯 / 灵枢） — 多智能体协作系统 v2.0
 
 ## 系统架构
 
 ```
 ┌──────────────────────────────────────────────┐
-│              WorkBuddy 调度中心                │
+│      Synapse 调度中心（赛纳普斯 / 灵枢）       │
 │         http://localhost:8080/dashboard        │
 ├──────────────────────────────────────────────┤
 │                                              │
@@ -73,10 +75,10 @@ cc-switch --stop               # 停止代理
 |------|------|
 | 代理服务器 | D:\AI_Tools\claude-code\simple-proxy.js |
 | 仪表盘 | D:\AI_Tools\claude-code\dashboard.html |
-| 调度脚本 | D:\AI_Tools\workbuddy.ps1 |
+| 调度脚本（Synapse CLI） | D:\AI_Tools\workbuddy.ps1 |
 | 管理脚本 | D:\AI_Tools\claude-code\manage.ps1 |
 | CC Switch | C:\Users\Confu\AppData\Roaming\npm\cc-switch.cmd |
-| 项目工作区 | D:\AI-Workshop |
+| 项目工作区（Synapse 中枢） | D:\AI-Workshop |
 | Claude Code | D:\AI_Tools\claude-code |
 | Codex | D:\AI_Tools\codex |
 | Trae | D:\AI_Tools\Trae\TRAE SOLO CN |

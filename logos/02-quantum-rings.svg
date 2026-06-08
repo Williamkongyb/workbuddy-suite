@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowHeavy">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="400" y2="400">
+      <stop offset="0%" stop-color="#08081A"/>
+      <stop offset="100%" stop-color="#0D0D20"/>
+    </linearGradient>
+    <linearGradient id="ring1g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="50%" stop-color="#8A2BE2"/>
+      <stop offset="100%" stop-color="#00F0FF"/>
+    </linearGradient>
+    <radialGradient id="coreGrad">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#00F0FF" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="400" fill="url(#bg)"/>
+
+  <!-- Core glow -->
+  <circle cx="300" cy="200" r="60" fill="url(#coreGrad)" opacity="0.3"/>
+
+  <!-- Orbit ring 1 - tilted ellipse -->
+  <ellipse cx="300" cy="200" rx="130" ry="45" fill="none"
+    stroke="url(#ring1g)" stroke-width="1.5" opacity="0.4"
+    transform="rotate(-20 300 200)" filter="url(#softGlow)"/>
+
+  <!-- Orbit ring 2 -->
+  <ellipse cx="300" cy="200" rx="110" ry="85" fill="none"
+    stroke="#00F0FF" stroke-width="1" opacity="0.25"
+    transform="rotate(30 300 200)" filter="url(#softGlow)"/>
+
+  <!-- Orbit ring 3 -->
+  <ellipse cx="300" cy="200" rx="140" ry="70" fill="none"
+    stroke="#8A2BE2" stroke-width="0.8" opacity="0.25"
+    transform="rotate(60 300 200)" filter="url(#softGlow)"/>
+
+  <!-- Orbit ring 4 - nearly horizontal -->
+  <ellipse cx="300" cy="200" rx="120" ry="30" fill="none"
+    stroke="#00F0FF" stroke-width="0.6" opacity="0.15"
+    transform="rotate(-5 300 200)"/>
+
+  <!-- Orbit ring 5 - small and tight -->
+  <ellipse cx="300" cy="200" rx="55" ry="20" fill="none"
+    stroke="#8A2BE2" stroke-width="1.2" opacity="0.35"
+    transform="rotate(-45 300 200)" filter="url(#softGlow)"/>
+
+  <!-- Orbiting particles on ring 1 -->
+  <circle cx="300" cy="200" r="3" fill="#00F0FF" filter="url(#glow)" opacity="0.9"/>
+  <circle cx="300" cy="200" r="1.5" fill="#fff" opacity="1"/>
+
+  <!-- Particles on ring 1 -->
+  <circle cx="410" cy="130" r="2.5" fill="#00F0FF" filter="url(#glow)"/>
+  <circle cx="190" cy="250" r="2" fill="#8A2BE2" filter="url(#glow)"/>
+  <circle cx="240" cy="115" r="2" fill="#00F0FF" filter="url(#glow)"/>
+
+  <!-- Particles on ring 2 -->
+  <circle cx="390" cy="250" r="2" fill="#8A2BE2" filter="url(#glow)"/>
+  <circle cx="210" cy="140" r="2.5" fill="#00F0FF" filter="url(#glow)"/>
+  <circle cx="350" cy="120" r="1.5" fill="#8A2BE2" filter="url(#glow)"/>
+
+  <!-- Particles on ring 3 -->
+  <circle cx="280" cy="100" r="1.5" fill="#00F0FF" filter="url(#glow)"/>
+  <circle cx="400" cy="210" r="2" fill="#8A2BE2" filter="url(#glow)"/>
+
+  <!-- Outer particle ring -->
+  <circle cx="440" cy="160" r="1.5" fill="#00F0FF" opacity="0.5"/>
+  <circle cx="180" cy="300" r="1.5" fill="#8A2BE2" opacity="0.5"/>
+  <circle cx="440" cy="280" r="1" fill="#00F0FF" opacity="0.4"/>
+  <circle cx="160" cy="170" r="1" fill="#8A2BE2" opacity="0.4"/>
+
+  <!-- Text -->
+  <text x="530" y="180" font-family="'Noto Serif SC','SimSun','Microsoft YaHei',serif"
+    font-size="52" font-weight="700" fill="#00F0FF" filter="url(#glow)" opacity="0.95">灵枢</text>
+  <text x="530" y="215" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="14" font-weight="300" fill="#8A2BE2" letter-spacing="6" opacity="0.8">SYNAPSE</text>
+  <text x="530" y="245" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="9" font-weight="300" fill="#4a5568" letter-spacing="4" opacity="0.6">MULTI-AGENT SYSTEM</text>
+  <line x1="530" y1="230" x2="700" y2="230" stroke="#00F0FF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="530" y1="252" x2="650" y2="252" stroke="#8A2BE2" stroke-width="0.5" opacity="0.2"/>
+</svg>

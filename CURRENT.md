@@ -1,9 +1,10 @@
-# 当前任务
+# Synapse（赛纳普斯 / 灵枢）— 当前任务
 
 > 最后更新: 2026-06-09
 
 ## 进行中
-- [ ] 暂无
+- [x] 系统品牌统一: Synapse（赛纳普斯/灵枢）+ NexusForge
+- [x] Logo 设计: 5款方案已出，待选定
 
 ## 已完成
 - [x] 创建 MEMORY.md、WORKFLOW.md、CURRENT.md 模板

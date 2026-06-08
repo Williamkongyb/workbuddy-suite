@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowP">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="400">
+      <stop offset="0%" stop-color="#0A0A16"/>
+      <stop offset="100%" stop-color="#0D0D1F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="400" fill="url(#bg)"/>
+
+  <!-- Circuit board background pattern -->
+  <g opacity="0.04" stroke="#00F0FF" stroke-width="0.5">
+    <line x1="0" y1="50" x2="800" y2="50"/>
+    <line x1="0" y1="150" x2="800" y2="150"/>
+    <line x1="0" y1="250" x2="800" y2="250"/>
+    <line x1="0" y1="350" x2="800" y2="350"/>
+    <line x1="100" y1="0" x2="100" y2="400"/>
+    <line x1="300" y1="0" x2="300" y2="400"/>
+    <line x1="500" y1="0" x2="500" y2="400"/>
+    <line x1="700" y1="0" x2="700" y2="400"/>
+  </g>
+
+  <!-- Main circuit core - diamond/octagon shape -->
+  <g transform="translate(260, 200)">
+    <!-- Outer circuit ring -->
+    <path d="M0,-80 L56,-56 L80,0 L56,56 L0,80 L-56,56 L-80,0 L-56,-56 Z"
+      fill="none" stroke="#00F0FF" stroke-width="0.8" opacity="0.3"/>
+
+    <!-- Middle octagon -->
+    <path d="M0,-60 L42,-42 L60,0 L42,42 L0,60 L-42,42 L-60,0 L-42,-42 Z"
+      fill="none" stroke="#00F0FF" stroke-width="1.5" filter="url(#glow)" opacity="0.6"/>
+
+    <!-- Inner diamond -->
+    <path d="M0,-35 L25,-25 L35,0 L25,25 L0,35 L-25,25 L-35,0 L-25,-25 Z"
+      fill="none" stroke="#8A2BE2" stroke-width="2" filter="url(#glowP)" opacity="0.8"/>
+
+    <!-- Core processor square -->
+    <rect x="-15" y="-15" width="30" height="30" rx="3"
+      fill="none" stroke="#00F0FF" stroke-width="2" filter="url(#glow)"/>
+    <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#00F0FF" filter="url(#glow)" opacity="0.7"/>
+    <rect x="-3" y="-3" width="6" height="6" rx="1" fill="#fff" opacity="0.9"/>
+
+    <!-- Circuit contact pins (N, E, S, W) -->
+    <rect x="-3" y="-25" width="6" height="10" rx="1" fill="#00F0FF" opacity="0.6"/>
+    <rect x="15" y="-3" width="10" height="6" rx="1" fill="#8A2BE2" opacity="0.6"/>
+    <rect x="-3" y="15" width="6" height="10" rx="1" fill="#00F0FF" opacity="0.6"/>
+    <rect x="-25" y="-3" width="10" height="6" rx="1" fill="#8A2BE2" opacity="0.6"/>
+
+    <!-- Diagonal contact pins -->
+    <rect x="12" y="-18" width="8" height="4" rx="1" fill="#00F0FF" opacity="0.4" transform="rotate(45 16 -16)"/>
+    <rect x="-20" y="-18" width="8" height="4" rx="1" fill="#8A2BE2" opacity="0.4" transform="rotate(-45 -16 -16)"/>
+    <rect x="12" y="14" width="8" height="4" rx="1" fill="#00F0FF" opacity="0.4" transform="rotate(-45 16 16)"/>
+    <rect x="-20" y="14" width="8" height="4" rx="1" fill="#8A2BE2" opacity="0.4" transform="rotate(45 -16 16)"/>
+  </g>
+
+  <!-- Circuit traces extending outward -->
+  <g fill="none" stroke-width="1.5" opacity="0.5">
+    <!-- UP -->
+    <path d="M260,140 L260,100 L220,100 L220,70" stroke="#00F0FF" filter="url(#glow)"/>
+    <circle cx="220" cy="70" r="3" fill="#00F0FF"/>
+
+    <!-- DOWN -->
+    <path d="M260,260 L260,290 L300,290 L300,330" stroke="#00F0FF" filter="url(#glow)"/>
+    <circle cx="300" cy="330" r="3" fill="#00F0FF"/>
+
+    <!-- LEFT -->
+    <path d="M220,200 L180,200 L180,170" stroke="#8A2BE2" filter="url(#glowP)"/>
+    <circle cx="180" cy="170" r="3" fill="#8A2BE2"/>
+
+    <!-- RIGHT -->
+    <path d="M300,170 L340,170 L340,140" stroke="#8A2BE2" filter="url(#glowP)"/>
+    <circle cx="340" cy="140" r="3" fill="#8A2BE2"/>
+  </g>
+
+  <!-- Secondary circuit traces -->
+  <g fill="none" stroke-width="1" opacity="0.3">
+    <path d="M240,140 L240,90 L200,90" stroke="#00F0FF"/>
+    <path d="M280,140 L280,110 L320,110" stroke="#8A2BE2"/>
+    <path d="M220,220 L150,220 L150,250" stroke="#00F0FF"/>
+    <path d="M300,230 L370,230 L370,260" stroke="#8A2BE2"/>
+  </g>
+
+  <!-- Data dots along traces -->
+  <circle cx="240" cy="120" r="1.5" fill="#00F0FF" filter="url(#glow)" opacity="0.7"/>
+  <circle cx="280" cy="125" r="1.5" fill="#8A2BE2" filter="url(#glowP)" opacity="0.7"/>
+  <circle cx="200" cy="225" r="1.5" fill="#00F0FF" filter="url(#glow)" opacity="0.5"/>
+  <circle cx="320" cy="235" r="1.5" fill="#8A2BE2" filter="url(#glowP)" opacity="0.5"/>
+
+  <!-- Text -->
+  <text x="410" y="175" font-family="'Noto Serif SC','SimSun','Microsoft YaHei',serif"
+    font-size="54" font-weight="700" fill="#00F0FF" filter="url(#glow)" opacity="0.95">灵枢</text>
+  <text x="410" y="212" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="14" font-weight="300" fill="#8A2BE2" letter-spacing="6" opacity="0.8">SYNAPSE</text>
+  <text x="410" y="242" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="9" font-weight="300" fill="#4a5568" letter-spacing="4" opacity="0.6">MULTI-AGENT SYSTEM</text>
+  <line x1="410" y1="227" x2="600" y2="227" stroke="#00F0FF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="410" y1="249" x2="560" y2="249" stroke="#8A2BE2" stroke-width="0.5" opacity="0.2"/>
+</svg>

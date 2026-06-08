@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowP">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="400">
+      <stop offset="0%" stop-color="#050514"/>
+      <stop offset="50%" stop-color="#0A0A1F"/>
+      <stop offset="100%" stop-color="#050514"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#00F0FF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beamP" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8A2BE2" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#8A2BE2" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#8A2BE2" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="core">
+      <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="20%" stop-color="#00F0FF" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#00F0FF" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="400" fill="url(#bg)"/>
+
+  <!-- Subtle vertical grid lines -->
+  <g opacity="0.03" stroke="#00F0FF" stroke-width="0.5">
+    <line x1="50" y1="0" x2="50" y2="400"/>
+    <line x1="150" y1="0" x2="150" y2="400"/>
+    <line x1="250" y1="0" x2="250" y2="400"/>
+    <line x1="350" y1="0" x2="350" y2="400"/>
+    <line x1="450" y1="0" x2="450" y2="400"/>
+  </g>
+
+  <!-- Data streams - vertical beams -->
+  <!-- Stream column 1 -->
+  <rect x="160" y="0" width="2" height="400" fill="url(#beam)" opacity="0.3"/>
+  <rect x="200" y="0" width="1.5" height="400" fill="url(#beamP)" opacity="0.25"/>
+  <rect x="230" y="0" width="1" height="400" fill="url(#beam)" opacity="0.2"/>
+
+  <!-- Stream column 2 - central -->
+  <rect x="255" y="0" width="3" height="400" fill="url(#beam)" opacity="0.4"/>
+  <rect x="270" y="0" width="1.5" height="400" fill="url(#beamP)" opacity="0.3"/>
+
+  <!-- Stream column 3 -->
+  <rect x="290" y="0" width="2" height="400" fill="url(#beam)" opacity="0.3"/>
+  <rect x="310" y="0" width="1" height="400" fill="url(#beamP)" opacity="0.2"/>
+  <rect x="340" y="0" width="2" height="400" fill="url(#beam)" opacity="0.25"/>
+
+  <!-- Central core -->
+  <circle cx="270" cy="200" r="50" fill="url(#core)" opacity="0.2"/>
+  <circle cx="270" cy="200" r="25" fill="url(#core)" opacity="0.3"/>
+
+  <!-- Core diamond -->
+  <g transform="translate(270, 200)">
+    <rect x="-12" y="-12" width="24" height="24" rx="2"
+      fill="none" stroke="#00F0FF" stroke-width="1" opacity="0.5" transform="rotate(45)"/>
+    <rect x="-6" y="-6" width="12" height="12" rx="1"
+      fill="none" stroke="#00F0FF" stroke-width="1.5" opacity="0.8" transform="rotate(45)" filter="url(#glow)"/>
+    <rect x="-2" y="-2" width="4" height="4" fill="#00F0FF" filter="url(#glow)" opacity="0.9"/>
+  </g>
+
+  <!-- Horizontal accent bars -->
+  <line x1="120" y1="195" x2="160" y2="195" stroke="#00F0FF" stroke-width="1" opacity="0.4" filter="url(#glow)"/>
+  <line x1="380" y1="195" x2="420" y2="195" stroke="#00F0FF" stroke-width="1" opacity="0.4" filter="url(#glow)"/>
+  <line x1="120" y1="205" x2="160" y2="205" stroke="#8A2BE2" stroke-width="0.8" opacity="0.3" filter="url(#glowP)"/>
+  <line x1="380" y1="205" x2="420" y2="205" stroke="#8A2BE2" stroke-width="0.8" opacity="0.3" filter="url(#glowP)"/>
+
+  <!-- Data particles floating -->
+  <circle cx="163" cy="120" r="1.5" fill="#00F0FF" filter="url(#glow)" opacity="0.6"/>
+  <circle cx="202" cy="280" r="1" fill="#8A2BE2" filter="url(#glowP)" opacity="0.5"/>
+  <circle cx="232" cy="160" r="1.5" fill="#00F0FF" filter="url(#glow)" opacity="0.4"/>
+  <circle cx="310" cy="240" r="1" fill="#8A2BE2" filter="url(#glowP)" opacity="0.5"/>
+  <circle cx="255" cy="80" r="1.5" fill="#00F0FF" filter="url(#glow)" opacity="0.7"/>
+  <circle cx="290" cy="320" r="1.5" fill="#00F0FF" filter="url(#glow)" opacity="0.6"/>
+  <circle cx="340" cy="100" r="1" fill="#8A2BE2" filter="url(#glowP)" opacity="0.4"/>
+
+  <!-- Binary-like data blocks -->
+  <g opacity="0.15" fill="#00F0FF" font-family="monospace" font-size="8">
+    <text x="152" y="80">01</text><text x="152" y="95">10</text><text x="152" y="110">11</text>
+    <text x="152" y="280">00</text><text x="152" y="295">01</text><text x="152" y="310">10</text>
+    <text x="350" y="70">101</text><text x="350" y="85">011</text><text x="350" y="100">110</text>
+    <text x="350" y="290">010</text><text x="350" y="305">100</text><text x="350" y="320">001</text>
+  </g>
+
+  <!-- Text -->
+  <text x="460" y="175" font-family="'Noto Serif SC','SimSun','Microsoft YaHei',serif"
+    font-size="52" font-weight="700" fill="#00F0FF" filter="url(#glow)" opacity="0.95">灵枢</text>
+  <text x="460" y="212" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="14" font-weight="300" fill="#8A2BE2" letter-spacing="6" opacity="0.8">SYNAPSE</text>
+  <text x="460" y="242" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="9" font-weight="300" fill="#4a5568" letter-spacing="4" opacity="0.6">MULTI-AGENT SYSTEM</text>
+  <line x1="460" y1="227" x2="640" y2="227" stroke="#00F0FF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="460" y1="249" x2="590" y2="249" stroke="#8A2BE2" stroke-width="0.5" opacity="0.2"/>
+</svg>

@@ -1,6 +1,7 @@
-# 团队角色库
+# Synapse 团队角色库
 
-> 总规模: 12人 | 参考: Scrum+DevOps | 详见: RULES.md
+> 系统: Synapse（赛纳普斯 / 灵枢） — 多智能体协作系统
+> 团队: NexusForge（枢纽锻造） | 总规模: 13常驻+2预备役 | 参考: Scrum+DevOps | 详见: RULES.md
 
 ---
 

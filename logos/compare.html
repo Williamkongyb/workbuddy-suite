@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse Logo 设计方案对比</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a18;
+    font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+  .header {
+    text-align: center;
+    padding: 60px 40px 30px;
+    background: linear-gradient(180deg, rgba(0,240,255,0.05) 0%, transparent 100%);
+  }
+  .header h1 {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00F0FF, #8A2BE2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .header p {
+    font-size: 14px;
+    color: #64748b;
+    letter-spacing: 2px;
+  }
+  .logos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px 40px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .logo-card {
+    background: #111122;
+    border: 1px solid #1a1a3a;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .logo-card:hover {
+    border-color: #00F0FF;
+    box-shadow: 0 0 30px rgba(0,240,255,0.08);
+    transform: translateY(-2px);
+  }
+  .logo-card.selected {
+    border-color: #8A2BE2;
+    box-shadow: 0 0 40px rgba(138,43,226,0.15);
+  }
+  .logo-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .logo-info {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #1a1a3a;
+  }
+  .logo-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00F0FF;
+  }
+  .logo-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-right: 6px;
+  }
+  .tag-tech { background: rgba(0,240,255,0.1); color: #00F0FF; }
+  .tag-purple { background: rgba(138,43,226,0.1); color: #8A2BE2; }
+  .actions {
+    text-align: center;
+    padding: 20px 40px 60px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    margin: 0 8px;
+    border: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #00F0FF, #0088cc);
+    color: #000;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 20px rgba(0,240,255,0.3);
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid #8A2BE2;
+    color: #8A2BE2;
+  }
+  .btn-secondary:hover {
+    background: rgba(138,43,226,0.1);
+  }
+  .ranking {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .star { color: #00F0FF; font-size: 14px; }
+  .star.dim { color: #2a2a4a; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Synapse &middot; 赛纳普斯 &middot; 灵枢</h1>
+  <p>LOGO 设计方案对比 &mdash; 5 款高科技风格</p>
+</div>
+
+<div class="logos-grid" id="logosGrid">
+  <!-- JS populated -->
+</div>
+
+<div class="actions">
+  <p style="font-size:13px;color:#64748b;margin-bottom:16px;">点击卡片选中，对比后告诉我你最喜欢哪一款</p>
+</div>
+
+<script>
+const logos = [
+  {
+    id: 'neural-hex',
+    name: '方案一：Neural Hex',
+    desc: '六边形神经网络 · 突触连接 · 分布式节点',
+    file: 'logos/01-neural-hex.svg',
+    tags: ['tech', 'tech'],
+    rating: 4
+  },
+  {
+    id: 'quantum-rings',
+    name: '方案二：Quantum Rings',
+    desc: '量子轨道 · 多维环绕 · 动态粒子',
+    file: 'logos/02-quantum-rings.svg',
+    tags: ['tech', 'purple'],
+    rating: 4
+  },
+  {
+    id: 'circuit-core',
+    name: '方案三：Circuit Core',
+    desc: '电路板芯片 · 数据总线 · 工业科技',
+    file: 'logos/03-circuit-core.svg',
+    tags: ['tech', 'purple'],
+    rating: 4
+  },
+  {
+    id: 'holo-prism',
+    name: '方案四：Holo Prism',
+    desc: '全息晶体 · 光线折射 · 三维几何',
+    file: 'logos/04-holo-prism.svg',
+    tags: ['tech'],
+    rating: 5
+  },
+  {
+    id: 'data-stream',
+    name: '方案五：Data Stream',
+    desc: '数据流柱 · 二进制矩阵 · 极简赛博',
+    file: 'logos/05-data-stream.svg',
+    tags: ['purple'],
+    rating: 4
+  }
+];
+
+const grid = document.getElementById('logosGrid');
+
+logos.forEach((logo, i) => {
+  const card = document.createElement('div');
+  card.className = 'logo-card';
+  card.onclick = () => selectLogo(i);
+  card.dataset.index = i;
+
+  const stars = [];
+  for (let s = 0; s < 5; s++) {
+    stars.push(s < logo.rating ? '<span class="star">&#9733;</span>' : '<span class="star dim">&#9733;</span>');
+  }
+
+  card.innerHTML = `
+    <img src="${logo.file}" alt="${logo.name}" loading="lazy">
+    <div class="logo-info">
+      <div>
+        <div class="logo-name">${logo.name}</div>
+        <div class="logo-desc">${logo.desc}</div>
+      </div>
+      <div>
+        ${logo.tags.map(t => t === 'tech'
+          ? '<span class="tag tag-tech">CYBER</span>'
+          : '<span class="tag tag-purple">NEURAL</span>').join('')}
+        <div class="ranking" style="margin-top:6px;">${stars.join('')}</div>
+      </div>
+    </div>
+  `;
+
+  grid.appendChild(card);
+});
+
+function selectLogo(idx) {
+  document.querySelectorAll('.logo-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.logo-card')[idx].classList.add('selected');
+}
+</script>
+
+</body>
+</html>

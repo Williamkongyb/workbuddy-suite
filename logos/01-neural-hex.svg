@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowStrong">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowPurple">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060612"/>
+      <stop offset="50%" stop-color="#0A0A1A"/>
+      <stop offset="100%" stop-color="#060612"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#8A2BE2"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="400" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid -->
+  <g opacity="0.03" stroke="#00F0FF" stroke-width="0.5">
+    <line x1="0" y1="100" x2="800" y2="100"/><line x1="0" y1="200" x2="800" y2="200"/>
+    <line x1="0" y1="300" x2="800" y2="300"/>
+    <line x1="200" y1="0" x2="200" y2="400"/><line x1="400" y1="0" x2="400" y2="400"/>
+    <line x1="600" y1="0" x2="600" y2="400"/>
+  </g>
+
+  <!-- Central hexagon structure -->
+  <g transform="translate(280, 200)">
+    <polygon points="0,-85 74,-42 74,42 0,85 -74,42 -74,-42"
+      fill="none" stroke="#00F0FF" stroke-width="1.5" filter="url(#glow)" opacity="0.6"/>
+    <polygon points="0,-60 52,-30 52,30 0,60 -52,30 -52,-30"
+      fill="none" stroke="#00F0FF" stroke-width="2" filter="url(#glow)" opacity="0.8"/>
+    <polygon points="0,-35 30,-17 30,17 0,35 -30,17 -30,-17"
+      fill="none" stroke="#8A2BE2" stroke-width="2" filter="url(#glowPurple)"/>
+    <!-- Core node -->
+    <circle cx="0" cy="0" r="8" fill="#00F0FF" filter="url(#glowStrong)"/>
+    <circle cx="0" cy="0" r="3" fill="#fff" opacity="0.9"/>
+
+    <!-- Inner rotating dots -->
+    <circle cx="0" cy="-20" r="2" fill="#8A2BE2" filter="url(#glowPurple)" opacity="0.8"/>
+    <circle cx="17" cy="-10" r="2" fill="#00F0FF" filter="url(#glow)" opacity="0.6"/>
+    <circle cx="17" cy="10" r="2" fill="#8A2BE2" filter="url(#glowPurple)" opacity="0.7"/>
+    <circle cx="0" cy="20" r="2" fill="#00F0FF" filter="url(#glow)" opacity="0.5"/>
+    <circle cx="-17" cy="10" r="2" fill="#8A2BE2" filter="url(#glowPurple)" opacity="0.6"/>
+    <circle cx="-17" cy="-10" r="2" fill="#00F0FF" filter="url(#glow)" opacity="0.7"/>
+  </g>
+
+  <!-- Connecting lines from hex to outer nodes -->
+  <g opacity="0.4" stroke="url(#lineGrad)" stroke-width="1" filter="url(#glow)">
+    <line x1="280" y1="115" x2="180" y2="60"/>
+    <line x1="354" y1="158" x2="440" y2="80"/>
+    <line x1="354" y1="242" x2="440" y2="310"/>
+    <line x1="280" y1="285" x2="200" y2="340"/>
+    <line x1="206" y1="242" x2="120" y2="310"/>
+    <line x1="206" y1="158" x2="120" y2="80"/>
+  </g>
+
+  <!-- Outer nodes -->
+  <circle cx="180" cy="60" r="5" fill="none" stroke="#00F0FF" stroke-width="1.5" filter="url(#glow)"/>
+  <circle cx="180" cy="60" r="2" fill="#00F0FF"/>
+  <circle cx="440" cy="80" r="5" fill="none" stroke="#8A2BE2" stroke-width="1.5" filter="url(#glowPurple)"/>
+  <circle cx="440" cy="80" r="2" fill="#8A2BE2"/>
+  <circle cx="440" cy="310" r="5" fill="none" stroke="#00F0FF" stroke-width="1.5" filter="url(#glow)"/>
+  <circle cx="440" cy="310" r="2" fill="#00F0FF"/>
+  <circle cx="200" cy="340" r="5" fill="none" stroke="#8A2BE2" stroke-width="1.5" filter="url(#glowPurple)"/>
+  <circle cx="200" cy="340" r="2" fill="#8A2BE2"/>
+  <circle cx="120" cy="310" r="5" fill="none" stroke="#00F0FF" stroke-width="1.5" filter="url(#glow)"/>
+  <circle cx="120" cy="310" r="2" fill="#00F0FF"/>
+  <circle cx="120" cy="80" r="5" fill="none" stroke="#8A2BE2" stroke-width="1.5" filter="url(#glowPurple)"/>
+  <circle cx="120" cy="80" r="2" fill="#8A2BE2"/>
+
+  <!-- Floating particles -->
+  <circle cx="100" cy="160" r="1.5" fill="#00F0FF" opacity="0.3"/>
+  <circle cx="460" cy="180" r="1.5" fill="#8A2BE2" opacity="0.3"/>
+  <circle cx="250" cy="350" r="1" fill="#00F0FF" opacity="0.4"/>
+  <circle cx="350" cy="50" r="1.5" fill="#8A2BE2" opacity="0.3"/>
+  <circle cx="500" cy="140" r="1" fill="#00F0FF" opacity="0.2"/>
+  <circle cx="160" cy="250" r="1" fill="#8A2BE2" opacity="0.2"/>
+
+  <!-- Text -->
+  <text x="530" y="180" font-family="'Noto Serif SC','SimSun','Microsoft YaHei',serif"
+    font-size="52" font-weight="700" fill="#00F0FF" filter="url(#glow)" opacity="0.95">灵枢</text>
+  <text x="530" y="215" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="14" font-weight="300" fill="#8A2BE2" letter-spacing="6" opacity="0.8">SYNAPSE</text>
+  <text x="530" y="245" font-family="'Inter','Segoe UI','Helvetica Neue',sans-serif"
+    font-size="9" font-weight="300" fill="#4a5568" letter-spacing="4" opacity="0.6">MULTI-AGENT SYSTEM</text>
+
+  <!-- Decorative accent line -->
+  <line x1="530" y1="230" x2="700" y2="230" stroke="#00F0FF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="530" y1="252" x2="650" y2="252" stroke="#8A2BE2" stroke-width="0.5" opacity="0.2"/>
+</svg>
