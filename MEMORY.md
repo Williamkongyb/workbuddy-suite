@@ -1,9 +1,12 @@
 # 项目记忆
 
 ## 项目信息
-- **项目名称**: AI-Workshop
+- **团队名**: NexusForge（枢纽锻造）
+- **项目名称**: WorkBuddy Suite
 - **创建日期**: 2026-06-09
 - **路径**: D:\AI-Workshop
+- **仓库**: https://github.com/Williamkongyb/workbuddy-suite
+- **版本**: v1.0
 
 ## 团队编制 (15人)
 
