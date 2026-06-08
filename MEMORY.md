@@ -1,8 +1,9 @@
 # 项目记忆
 
-## 项目信息
+## 系统信息
+- **系统名**: Synapse（赛纳普斯 / 灵枢）
 - **团队名**: NexusForge（枢纽锻造）
-- **项目名称**: WorkBuddy Suite
+- **项目**: WorkBuddy Suite
 - **创建日期**: 2026-06-09
 - **路径**: D:\AI-Workshop
 - **仓库**: https://github.com/Williamkongyb/workbuddy-suite
