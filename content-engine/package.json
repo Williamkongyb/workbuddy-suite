@@ -1,0 +1,13 @@
+{
+  "name": "synapse-content-engine",
+  "version": "1.0.0",
+  "description": "Synapse Content Engine - AI-powered multi-platform content research & generation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

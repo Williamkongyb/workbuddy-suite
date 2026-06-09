@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse Content Engine v3 — 灵枢·全网内容矩阵</title>
+<style>
+:root {
+  --cyan: #00F0FF; --purple: #8A2BE2; --bg: #0A0A14;
+  --card: #111122; --input: #0D0D1F; --border: #1a1a3a;
+  --text: #e0e0e0; --muted: #64748b; --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Inter','PingFang SC','Microsoft YaHei',sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh;
+}
+.topbar {
+  background: linear-gradient(90deg, rgba(0,240,255,0.03), rgba(138,43,226,0.03));
+  border-bottom: 1px solid var(--border); padding: 10px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar .brand { font-size:15px; font-weight:700;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.topbar .badge { font-size:10px; padding:4px 12px; border-radius:10px;
+  background: rgba(0,240,255,0.08); color: var(--cyan);
+  border:1px solid rgba(0,240,255,0.15); }
+.container { max-width: 1300px; margin:0 auto; padding:20px 28px; }
+
+/* Tabs */
+.tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:2px solid var(--border); }
+.tab { padding:10px 20px; cursor:pointer; font-size:13px; font-weight:600;
+  color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-2px;
+  transition:all 0.2s; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
+
+/* Panel */
+.panel { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.panel h3 { font-size:13px; color:var(--muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; }
+
+/* Category chips */
+.cat-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.cat-chip { padding:10px 18px; border-radius:20px; font-size:13px; cursor:pointer;
+  border:1px solid var(--border); background:var(--input); color:var(--muted);
+  transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+.cat-chip:hover { border-color:rgba(0,240,255,0.3); color:var(--text); }
+.cat-chip.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,240,255,0.05); }
+.cat-chip .persona { font-size:10px; color:var(--muted); }
+
+/* Platform grid */
+.plat-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.plat-chip { padding:8px 16px; border-radius:20px; font-size:13px; cursor:pointer;
+  border:1px solid var(--border); background:var(--input); color:var(--muted);
+  transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+.plat-chip:hover { border-color:rgba(0,240,255,0.3); }
+.plat-chip.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,240,255,0.05); }
+
+/* Hot topics */
+.hot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:8px; max-height:400px; overflow-y:auto; }
+.hot-item { background:var(--input); border:1px solid var(--border); border-radius:8px;
+  padding:10px 14px; cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:flex-start; gap:10px; }
+.hot-item:hover { border-color:var(--cyan); background:rgba(0,240,255,0.03); }
+.hot-item .score { font-size:12px; font-weight:700; color:var(--cyan); min-width:32px; text-align:center; }
+.hot-item .info { flex:1; }
+.hot-item .title { font-size:13px; font-weight:500; line-height:1.4; }
+.hot-item .meta { font-size:11px; color:var(--muted); margin-top:4px; }
+
+/* Input */
+.input-row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+.input-group { flex:1; min-width:200px; }
+.input-group label { font-size:11px; font-weight:600; color:var(--muted);
+  display:block; margin-bottom:4px; letter-spacing:1px; }
+.input-group input, .input-group textarea { width:100%; background:var(--input);
+  border:1px solid var(--border); border-radius:8px; padding:10px 14px;
+  color:var(--text); font-size:14px; outline:none; font-family:inherit; }
+.input-group input:focus, .input-group textarea:focus { border-color:var(--cyan); }
+.input-group textarea { resize:vertical; min-height:50px; }
+
+.btn { padding:12px 24px; border:none; border-radius:8px; font-size:14px;
+  font-weight:600; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+.btn-primary { background:linear-gradient(135deg, var(--cyan), #0088cc); color:#000; }
+.btn-primary:hover { box-shadow:0 0 20px rgba(0,240,255,0.25); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-outline { background:transparent; border:1px solid var(--purple); color:var(--purple); }
+.btn-outline:hover { background:rgba(138,43,226,0.08); }
+.btn-sm { padding:6px 14px; font-size:12px; }
+
+.status-bar { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:12px; color:var(--muted); }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
+.dot.active { background:var(--cyan); animation:pulse 1s infinite; }
+.dot.done { background:#00cc66; }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+.results { display:none; }
+.results.show { display:block; }
+
+.research-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+.research-panel h3 { font-size:13px; color:var(--cyan); margin-bottom:10px; }
+.angle-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; }
+.angle-card { background:var(--input); border:1px solid var(--border); border-radius:8px; padding:12px; }
+.angle-card .num { font-size:10px; font-weight:700; color:var(--cyan); margin-bottom:4px; }
+.angle-card .ang { font-size:13px; font-weight:600; margin-bottom:6px; }
+.angle-card .pt { font-size:11px; color:var(--muted); margin:3px 0; padding-left:10px; border-left:2px solid var(--border); }
+
+.platform-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:12px; }
+.pcard { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.pcard-header { padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+.pcard-body { padding:16px; max-height:500px; overflow-y:auto; }
+.pcard-title { font-size:15px; font-weight:700; color:var(--cyan); margin-bottom:10px; }
+.pcard-text { font-size:13px; line-height:1.7; white-space:pre-wrap; color:var(--text); }
+.copy-btn { font-size:11px; padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; }
+.copy-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+
+.loading { display:none; text-align:center; padding:40px 0; }
+.loading.show { display:block; }
+.spinner { width:36px; height:36px; margin:0 auto 12px; border:3px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+@media(max-width:768px){ .platform-cards,.hot-grid { grid-template-columns:1fr; } }
+
+#toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999;
+  padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600;
+  transition:opacity 0.3s; opacity:0; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><span class="brand">Synapse Content Engine</span></div>
+  <span class="badge">v3.0 · 灵枢全网矩阵</span>
+</div>
+
+<div class="container">
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-panel="generate">🎯 内容生成</div>
+  <div class="tab" data-panel="hot">🔥 热点抓取</div>
+</div>
+
+<!-- ====== 生成面板 ====== -->
+<div id="panel-generate">
+
+  <div class="panel">
+    <h3>📂 选择内容方向（人设驱动）</h3>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+
+  <div class="panel">
+    <h3>📝 输入主题</h3>
+    <div class="input-row">
+      <div class="input-group" style="flex:2">
+        <label>内容主题</label>
+        <input type="text" id="topicInput" placeholder="例如：2026年AI行业趋势 / 明朝张居正改革 / 成都城市气质...">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>📱 选择发布平台</h3>
+    <div class="plat-grid" id="platGrid"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-primary" id="genBtn" onclick="startGenerate()">🚀 生成多平台文案</button>
+      <button class="btn btn-outline btn-sm" onclick="clearResults()">清除结果</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="dot" id="sd"></span>
+    <span id="st">就绪，选择方向和平台后开始</span>
+  </div>
+
+  <div class="loading" id="loading"><div class="spinner"></div><div id="lt">正在生成...</div></div>
+
+  <div class="results" id="results">
+    <div class="research-panel"><h3>🔬 调研结果</h3><div class="angle-grid" id="researchAngles"></div></div>
+    <div class="platform-cards" id="platCards"></div>
+    <div style="text-align:center;padding:20px;display:none" id="exportBar">
+      <button class="btn btn-primary btn-sm" onclick="copyAll()">📋 一键复制</button>
+      <button class="btn btn-outline btn-sm" onclick="downloadMD()">📥 导出MD</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== 热点面板 ====== -->
+<div id="panel-hot" style="display:none">
+  <div class="panel">
+    <h3>📂 选择内容方向</h3>
+    <div class="cat-grid" id="hotCatGrid"></div>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" id="hotBtn" onclick="fetchHot()">🔥 抓取今日热点</button>
+    </div>
+  </div>
+  <div class="hot-grid" id="hotGrid"></div>
+</div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+var CATS = {}, PLATS = {}, activeCat = null, isGenerating = false;
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  var c = {error:'#E24B4A',success:'#00cc66',warn:'#EF9F27'};
+  t.style.background = c[type] || '#333'; t.style.color = '#fff';
+  t.style.opacity = '1'; t.textContent = msg;
+  clearTimeout(t._t); t._t = setTimeout(function(){t.style.opacity='0'},3000);
+}
+
+async function init() {
+  var r = await fetch('/api/config'); var d = await r.json();
+  CATS = d.categories; PLATS = d.platforms;
+  
+  // 分类Chips
+  var cg = document.getElementById('catGrid');
+  Object.keys(CATS).forEach(function(k) {
+    var chip = document.createElement('div');
+    chip.className = 'cat-chip'; chip.dataset.key = k;
+    chip.innerHTML = CATS[k].icon + ' ' + CATS[k].name + ' <span class="persona">(' + CATS[k].persona + ')</span>';
+    chip.onclick = function() { selectCat(k); };
+    cg.appendChild(chip);
+  });
+  
+  // 热点分类Chips
+  var hcg = document.getElementById('hotCatGrid');
+  Object.keys(CATS).forEach(function(k) {
+    var chip = document.createElement('div');
+    chip.className = 'cat-chip'; chip.dataset.key = k;
+    chip.innerHTML = CATS[k].icon + ' ' + CATS[k].name;
+    chip.onclick = function() {
+      document.querySelectorAll('#hotCatGrid .cat-chip').forEach(function(c){c.classList.remove('active')});
+      chip.classList.add('active'); activeCat = k;
+    };
+    hcg.appendChild(chip);
+  });
+  if (Object.keys(CATS).length > 0) { hcg.querySelector('.cat-chip').click(); }
+  
+  // 平台Chips
+  var pg = document.getElementById('platGrid');
+  Object.keys(PLATS).forEach(function(k) {
+    var chip = document.createElement('div');
+    chip.className = 'plat-chip active'; chip.dataset.key = k;
+    chip.innerHTML = PLATS[k].icon + ' ' + PLATS[k].name;
+    chip.onclick = function() { chip.classList.toggle('active'); };
+    pg.appendChild(chip);
+  });
+  
+  // Tabs
+  document.getElementById('tabs').addEventListener('click', function(e) {
+    var tab = e.target.closest('.tab'); if (!tab) return;
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+    tab.classList.add('active');
+    document.getElementById('panel-generate').style.display = tab.dataset.panel === 'generate' ? 'block' : 'none';
+    document.getElementById('panel-hot').style.display = tab.dataset.panel === 'hot' ? 'block' : 'none';
+  });
+}
+init();
+
+function selectCat(key) {
+  activeCat = key;
+  document.querySelectorAll('#catGrid .cat-chip').forEach(function(c){c.classList.remove('active')});
+  document.querySelector('#catGrid [data-key="' + key + '"]').classList.add('active');
+}
+
+function getPlats() {
+  return Array.from(document.querySelectorAll('#platGrid .plat-chip.active')).map(function(c){return c.dataset.key});
+}
+
+async function startGenerate() {
+  if (isGenerating) return;
+  var topic = document.getElementById('topicInput').value.trim();
+  if (!topic) { toast('请输入主题','warn'); return; }
+  var plats = getPlats();
+  if (plats.length === 0) { toast('请选择平台','warn'); return; }
+  
+  isGenerating = true;
+  var btn = document.getElementById('genBtn'); btn.disabled = true; btn.textContent = '⏳ 生成中...';
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('exportBar').style.display = 'none';
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('sd').className = 'dot active';
+  document.getElementById('st').textContent = '正在全网调研...';
+  
+  try {
+    var resp = await fetch('/api/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({topic:topic, platforms:plats, category:activeCat})
+    });
+    var data = await resp.json();
+    if (!data.success) { toast(data.error,'error'); return; }
+    
+    // 渲染
+    renderResearch(data.research);
+    renderPlatforms(data.platforms);
+    document.getElementById('results').classList.add('show');
+    document.getElementById('exportBar').style.display = 'block';
+    
+    document.getElementById('sd').className = 'dot done';
+    document.getElementById('st').textContent = '✅ 生成完成！覆盖 ' + plats.length + ' 个平台';
+    toast('已生成 ' + plats.length + ' 个平台内容', 'success');
+  } catch(e) {
+    document.getElementById('sd').className = 'dot';
+    toast('错误: ' + e.message, 'error');
+  } finally {
+    isGenerating = false; btn.disabled = false; btn.textContent = '🚀 生成多平台文案';
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+async function fetchHot() {
+  var btn = document.getElementById('hotBtn'); btn.disabled = true; btn.textContent = '⏳ 抓取中...';
+  try {
+    var resp = await fetch('/api/hot', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({category:activeCat || 'hot_news'})
+    });
+    var data = await resp.json();
+    renderHot(data.topics);
+    toast('抓取到 ' + (data.topics||[]).length + ' 条热点', 'success');
+  } catch(e) { toast('抓取失败','error'); }
+  finally { btn.disabled = false; btn.textContent = '🔥 抓取今日热点'; }
+}
+
+function renderHot(topics) {
+  var hg = document.getElementById('hotGrid');
+  hg.innerHTML = (topics||[]).map(function(t,i){
+    return '<div class="hot-item" onclick="document.getElementById(\'topicInput\').value=\'' + (t.title||'').replace(/'/g,"\\'") + '\';document.querySelector(\'.tab[data-panel=generate]\').click()">' +
+      '<div class="score">' + (t.score||'') + '</div>' +
+      '<div class="info"><div class="title">' + esc(t.title) + '</div>' +
+      '<div class="meta">' + esc(t.source||'') + ' · ' + esc(t.brief||'') + '</div></div></div>';
+  }).join('');
+}
+
+function renderResearch(data) {
+  if (!data || !Array.isArray(data)) {
+    document.getElementById('researchAngles').innerHTML = '<div style="color:var(--muted);font-size:12px;">调研数据解析中...</div>';
+    return;
+  }
+  document.getElementById('researchAngles').innerHTML = data.map(function(r,i){
+    return '<div class="angle-card"><div class="num">角度 ' + (i+1) + '</div>' +
+      '<div class="ang">' + esc(r.angle||'') + '</div>' +
+      (r.keyPoints||[]).map(function(p){return '<div class="pt">' + esc(p) + '</div>';}).join('') +
+    '</div>';
+  }).join('');
+}
+
+function renderPlatforms(data) {
+  document.getElementById('platCards').innerHTML = Object.keys(data).map(function(k){
+    var p = data[k], plat = PLATS[k] || {};
+    return '<div class="pcard"><div class="pcard-header"><div>' +
+      (plat.icon||'') + ' <b>' + (plat.name||k) + '</b> <span style="font-size:10px;color:var(--muted)">' + ((p.body||'').length) + '字</span></div>' +
+      '<button class="copy-btn" onclick="copyCard(\''+k+'\')">📋 复制</button></div>' +
+      '<div class="pcard-body" id="body-'+k+'"><div class="pcard-title">' + esc(p.title||'') + '</div>' +
+      '<div class="pcard-text">' + esc(p.body||p.full||'') + '</div></div></div>';
+  }).join('');
+}
+
+function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+async function copyCard(k) {
+  var el = document.getElementById('body-'+k);
+  var t = el.querySelector('.pcard-title').textContent + '\n\n' + el.querySelector('.pcard-text').textContent;
+  try { await navigator.clipboard.writeText(t); toast('已复制','success'); } catch(e) { toast('复制失败','error'); }
+}
+
+function copyAll() {
+  var all = '# Synapse Content Engine v3.0\n\n';
+  document.querySelectorAll('.pcard').forEach(function(c){
+    all += '## ' + c.querySelector('b').textContent + '\n\n';
+    all += '### ' + c.querySelector('.pcard-title').textContent + '\n\n';
+    all += c.querySelector('.pcard-text').textContent + '\n\n---\n\n';
+  });
+  navigator.clipboard.writeText(all).then(function(){toast('全部已复制','success')});
+}
+
+function downloadMD() {
+  var all = '# Synapse Content Engine v3.0 生成内容\n> ' + new Date().toLocaleString('zh-CN') + '\n\n';
+  document.querySelectorAll('.pcard').forEach(function(c){
+    all += '## ' + c.querySelector('b').textContent + '\n\n### ' + c.querySelector('.pcard-title').textContent + '\n\n';
+    all += c.querySelector('.pcard-text').textContent + '\n\n---\n\n';
+  });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([all],{type:'text/markdown'}));
+  a.download = 'synapse-' + new Date().toISOString().slice(0,10) + '.md'; a.click();
+  toast('已下载','success');
+}
+
+function clearResults() {
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('exportBar').style.display = 'none';
+  document.getElementById('sd').className = 'dot';
+  document.getElementById('st').textContent = '就绪';
+}
+</script>
+
+</body>
+</html>
