@@ -133,7 +133,7 @@ body {
 
 <div class="topbar">
   <div><span class="brand">Synapse Content Engine</span></div>
-  <span class="badge">v3.0 · 灵枢全网矩阵</span>
+  <span class="badge">v5.0 · 灵枢全网矩阵</span>
 </div>
 
 <div class="container">
@@ -366,6 +366,14 @@ function renderViralResults(items, platform) {
     html += '<b style="font-size:14px;color:var(--text)">#' + (i+1) + ' ' + esc(p.title||'').substring(0,60) + '</b>';
     html += '<span style="font-size:12px;font-weight:700;color:' + scoreColor + '">⭐ ' + (score||'?') + '/100</span>';
     html += '</div>';
+    
+    // 互动数据
+    if (p.engagement) {
+      var e = p.engagement;
+      html += '<div style="font-size:11px;color:var(--muted);margin:4px 0">';
+      html += '❤️ ' + (e.likes||0).toLocaleString() + ' · ⭐ ' + (e['收藏']||e.saves||0).toLocaleString() + ' · 💬 ' + (e['评论']||e.comments||0).toLocaleString() + ' · 🔄 ' + (e['转发']||e.shares||0).toLocaleString();
+      html += ' · by @' + esc(p.author||'') + '</div>';
+    }
     
     if (a.hookAnalysis) html += '<div style="font-size:12px;color:var(--muted);margin:4px 0"><b>🎣 钩子：</b>'+esc(a.hookAnalysis)+'</div>';
     if (a.structure) html += '<div style="font-size:12px;color:var(--muted);margin:4px 0"><b>📐 结构：</b>'+esc(a.structure)+'</div>';
