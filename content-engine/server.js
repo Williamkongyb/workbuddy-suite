@@ -216,6 +216,41 @@ var server = http.createServer(async function(req, res) {
   var pathname = p.pathname;
   console.log('[' + new Date().toISOString() + '] ' + req.method + ' ' + pathname);
 
+  // === API: 自动抓取爆款（AI模拟各平台Top10）===
+  if (req.method === 'POST' && pathname === '/api/fetch-viral') {
+    var chunks = [];
+    req.on('data', function(c) { chunks.push(c); });
+    req.on('end', async function() {
+      try {
+        var body = JSON.parse(Buffer.concat(chunks).toString());
+        var platform = body.platform || 'xiaohongshu';
+        var plat = PLATFORMS[platform];
+        if (!plat) { res.writeHead(400); res.end(JSON.stringify({ error: '未知平台' })); return; }
+        
+        var cat = body.category ? CATEGORIES[body.category] : null;
+        var catPrompt = cat ? '领域：' + cat.name + '。' : '';
+        
+        var prompt = '模拟真实抓取【' + plat.name + '】平台今天最热门的10条爆款内容。' + catPrompt + '\n' +
+          '每条内容必须包含：title（真实风格标题，30字内）、body（完整正文，符合' + plat.name + '平台风格和字数要求）、engagement（用JSON表示，含likes/收藏/评论/转发数量，要合理）、author（创作者昵称）。\n' +
+          '输出JSON数组。只输出JSON，不要其他内容。';
+
+        var resp = await apiCall('/chat/completions', { model: MODEL, temperature: 0.8, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] });
+        var c = resp.choices ? resp.choices[0].message.content : '';
+        c = c.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+        var posts = [];
+        try { posts = JSON.parse(c); } catch(e) {
+          var m = c.match(/\[[\s\S]*\]/);
+          if (m) { try { posts = JSON.parse(m[0]); } catch(e2) {} }
+        }
+        
+        console.log('  抓到 ' + posts.length + ' 条爆款');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, platform: platform, posts: posts }));
+      } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
   // === API: 生成内容（支持分类）===
   if (req.method === 'POST' && pathname === '/api/generate') {
     var chunks = [];

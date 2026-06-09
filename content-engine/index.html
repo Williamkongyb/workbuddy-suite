@@ -204,7 +204,12 @@ body {
 <!-- ====== 拆解面板 ====== -->
 <div id="panel-analyze" style="display:none">
   <div class="panel">
-    <h3>📝 粘贴爆款文案</h3>
+    <h3>📝 两种模式</h3>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <button class="btn btn-primary" onclick="autoFetchViral()">🚀 一键抓取爆款（自动搜+自动拆）</button>
+      <span style="font-size:12px;color:var(--muted);align-self:center">或手动粘贴下方</span>
+    </div>
+    <div class="loading" id="viralLoading"><div class="spinner"></div><div id="viralStatus">正在抓取平台爆款...</div></div>
     <div class="input-row">
       <div class="input-group" style="flex:1">
         <label>选择平台</label>
@@ -307,6 +312,70 @@ function initAnalyzePlats() {
     ag.appendChild(chip);
   });
   ag.querySelector('.plat-chip').click();
+}
+
+// 一键抓取全平台爆款
+async function autoFetchViral() {
+  var activePlat = document.querySelector('#analyzePlatGrid .plat-chip.active');
+  var platform = activePlat ? activePlat.dataset.key : 'xiaohongshu';
+  
+  var btn = document.querySelector('button[onclick="autoFetchViral()"]');
+  btn.disabled = true; btn.textContent = '⏳ 正在抓取+拆解中...';
+  var loading = document.getElementById('viralLoading');
+  loading.classList.add('show');
+  var resultDiv = document.getElementById('analyzeResult');
+  resultDiv.style.display = 'none';
+  
+  try {
+    document.getElementById('viralStatus').textContent = '🔍 Step 1/2: AI模拟抓取' + (PLATS[platform]||{}).name + ' Top 10 爆款...';
+    var resp = await fetch('/api/fetch-viral', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({platform:platform, category:activeCat}) });
+    var data = await resp.json();
+    
+    if (!data.success) { toast(data.error,'error'); return; }
+    
+    document.getElementById('viralStatus').textContent = '✅ 抓到' + data.posts.length + '条爆款，正在逐个深度拆解...';
+    
+    // 逐个拆解
+    var analyzed = [];
+    for (var i = 0; i < data.posts.length; i++) {
+      document.getElementById('viralStatus').textContent = '🔬 拆解中 (' + (i+1) + '/' + data.posts.length + '): ' + (data.posts[i].title||'').substring(0,30) + '...';
+      var ar = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:data.posts[i].title+'\n\n'+data.posts[i].body, platform:platform}) });
+      var ad = await ar.json();
+      if (ad.success) analyzed.push({ post: data.posts[i], analysis: ad.analysis });
+    }
+    
+    renderViralResults(analyzed, platform);
+    toast('完成！拆解了' + analyzed.length + '条爆款', 'success');
+  } catch(e) { toast('错误: '+e.message,'error'); }
+  finally { btn.disabled = false; btn.textContent = '🚀 一键抓取爆款（自动搜+自动拆）'; loading.classList.remove('show'); }
+}
+
+function renderViralResults(items, platform) {
+  var r = document.getElementById('analyzeResult');
+  r.style.display = 'block';
+  
+  var html = '<div class="panel"><h3>📊 ' + (PLATS[platform]||{}).name + ' Top爆款拆解报告</h3>';
+  
+  items.forEach(function(item, i){
+    var a = item.analysis, p = item.post;
+    var score = a.score ? parseInt(a.score) : 0;
+    var scoreColor = score >= 80 ? '#00cc66' : score >= 60 ? '#EF9F27' : '#E24B4A';
+    
+    html += '<div style="margin:16px 0;padding:16px;background:var(--input);border-left:3px solid var(--cyan);border-radius:0 8px 8px 0">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    html += '<b style="font-size:14px;color:var(--text)">#' + (i+1) + ' ' + esc(p.title||'').substring(0,60) + '</b>';
+    html += '<span style="font-size:12px;font-weight:700;color:' + scoreColor + '">⭐ ' + (score||'?') + '/100</span>';
+    html += '</div>';
+    
+    if (a.hookAnalysis) html += '<div style="font-size:12px;color:var(--muted);margin:4px 0"><b>🎣 钩子：</b>'+esc(a.hookAnalysis)+'</div>';
+    if (a.structure) html += '<div style="font-size:12px;color:var(--muted);margin:4px 0"><b>📐 结构：</b>'+esc(a.structure)+'</div>';
+    if (a.reusableTemplate) html += '<div style="font-size:11px;margin:8px 0;padding:8px;background:rgba(0,240,255,0.04);border-radius:6px"><b style="color:var(--cyan)">📋 模板：</b>'+esc(a.reusableTemplate)+'</div>';
+    
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  r.innerHTML = html;
 }
 
 async function startAnalyze() {
