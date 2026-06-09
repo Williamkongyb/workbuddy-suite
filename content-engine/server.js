@@ -118,12 +118,20 @@ async function generatePlatformContent(topic, platformKey, researchData, categor
   }
 
   var personaPrompt = '';
+  var templateBlock = '';
   if (cat) {
     personaPrompt = '你的人设是【' + cat.persona + '】（' + cat.personaTrait + '）。用这个人设的风格来写。\n';
+    if (cat.templates) {
+      var t = cat.templates;
+      templateBlock = '=== 推荐文案模板 ===\n' +
+        '钩子参考（选一个用）：\n' + (t.hooks||[]).map(function(h){return '  · ' + h;}).join('\n') + '\n' +
+        '结构参考（选最合适的）：\n' + (t.structures||[]).map(function(s){return '  · ' + s;}).join('\n') + '\n' +
+        '结尾参考：\n' + (t.endings||[]).map(function(e){return '  · ' + e;}).join('\n') + '\n';
+    }
   }
 
   var prompt = '你是【' + plat.name + '】的爆款内容创作者。请严格围绕【' + topic + '】创作。\n' +
-    personaPrompt + '\n' +
+    personaPrompt + templateBlock + '\n' +
     '=== ' + plat.name + ' 平台规则 ===\n' +
     '风格：' + plat.rules.style + '\n字数：' + plat.rules.length + '\n' +
     '标题规则：' + plat.rules.title + '\n结构：' + plat.rules.structure + '\n' +
@@ -156,6 +164,37 @@ async function generatePlatformContent(topic, platformKey, researchData, categor
 }
 
 // ========== HTTP 服务器 ==========
+// ========== 爆款文案拆解 ==========
+async function analyzeCopy(copyText, platformKey) {
+  var plat = PLATFORMS[platformKey];
+  var platName = plat ? plat.name : '通用';
+  
+  var prompt = '你是一个顶级文案分析师。请深度拆解以下【' + platName + '】平台文案：\n\n' +
+    '=== 原文 ===\n' + copyText + '\n\n' +
+    '=== 拆解要求 ===\n' +
+    '请输出JSON格式：\n' +
+    '{"hookAnalysis":"开头钩子用了什么技巧（数字/悬念/痛点/反差等），为什么有效",\n' +
+    ' "structure":"内容结构拆解（分几段，每段作用）",\n' +
+    ' "emotionCurve":"情绪节奏分析（哪里制造焦虑/期待/共鸣/高潮/满足）",\n' +
+    ' "keywords":"提取了哪些关键词/标签",\n' +
+    ' "reusableTemplate":"提炼出可复用的通用模板（用{变量}标注可变部分）",\n' +
+    ' "score":"给这篇文案评分（1-100）并说明理由"}\n\n' +
+    '只输出JSON，不要其他内容。';
+
+  var resp = await apiCall('/chat/completions', {
+    model: MODEL, temperature: 0.5, max_tokens: 2000,
+    messages: [{ role: 'user', content: prompt }]
+  });
+  
+  var content = resp.choices ? resp.choices[0].message.content : '';
+  content = content.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+  try { return JSON.parse(content); } catch(e) {
+    var m = content.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch(e2) {} }
+    return { raw: content };
+  }
+}
+
 function serveFile(res, filePath, contentType) {
   try {
     var content = fs.readFileSync(filePath, 'utf8');
@@ -219,6 +258,25 @@ var server = http.createServer(async function(req, res) {
         var topics = await fetchHotTopics(category);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, category: category, topics: topics }));
+      } catch(e) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: 爆款拆解 ===
+  if (req.method === 'POST' && pathname === '/api/analyze') {
+    var chunks = [];
+    req.on('data', function(c) { chunks.push(c); });
+    req.on('end', async function() {
+      try {
+        var body = JSON.parse(Buffer.concat(chunks).toString());
+        if (!body.text) { res.writeHead(400); res.end(JSON.stringify({ error: '请提供文案内容' })); return; }
+        var result = await analyzeCopy(body.text, body.platform);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, analysis: result }));
       } catch(e) {
         res.writeHead(500);
         res.end(JSON.stringify({ error: e.message }));

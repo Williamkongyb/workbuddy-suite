@@ -141,6 +141,7 @@ body {
 <div class="tabs" id="tabs">
   <div class="tab active" data-panel="generate">🎯 内容生成</div>
   <div class="tab" data-panel="hot">🔥 热点抓取</div>
+  <div class="tab" data-panel="analyze">🔍 爆款拆解</div>
 </div>
 
 <!-- ====== 生成面板 ====== -->
@@ -198,6 +199,25 @@ body {
     </div>
   </div>
   <div class="hot-grid" id="hotGrid"></div>
+</div>
+
+<!-- ====== 拆解面板 ====== -->
+<div id="panel-analyze" style="display:none">
+  <div class="panel">
+    <h3>📝 粘贴爆款文案</h3>
+    <div class="input-row">
+      <div class="input-group" style="flex:1">
+        <label>选择平台</label>
+        <div class="plat-grid" id="analyzePlatGrid"></div>
+      </div>
+    </div>
+    <div class="input-group" style="margin-top:12px">
+      <textarea id="copyText" rows="8" placeholder="在此粘贴对标账号的爆款文案..." style="width:100%"></textarea>
+    </div>
+    <button class="btn btn-primary" id="analyzeBtn" onclick="startAnalyze()" style="margin-top:12px">🔍 拆解分析</button>
+    <div class="loading" id="analyzeLoading"><div class="spinner"></div><div>正在深度拆解...</div></div>
+  </div>
+  <div id="analyzeResult" style="display:none"></div>
 </div>
 
 </div>
@@ -260,14 +280,82 @@ async function init() {
     tab.classList.add('active');
     document.getElementById('panel-generate').style.display = tab.dataset.panel === 'generate' ? 'block' : 'none';
     document.getElementById('panel-hot').style.display = tab.dataset.panel === 'hot' ? 'block' : 'none';
+    document.getElementById('panel-analyze').style.display = tab.dataset.panel === 'analyze' ? 'block' : 'none';
   });
 }
 init();
+initAnalyzePlats();
 
 function selectCat(key) {
   activeCat = key;
   document.querySelectorAll('#catGrid .cat-chip').forEach(function(c){c.classList.remove('active')});
   document.querySelector('#catGrid [data-key="' + key + '"]').classList.add('active');
+}
+
+// 拆解面板平台选择
+function initAnalyzePlats() {
+  var ag = document.getElementById('analyzePlatGrid');
+  var activePlat = null;
+  Object.keys(PLATS).forEach(function(k){
+    var chip = document.createElement('div');
+    chip.className = 'plat-chip'; chip.dataset.key = k;
+    chip.innerHTML = PLATS[k].icon + ' ' + PLATS[k].name;
+    chip.onclick = function(){
+      document.querySelectorAll('#analyzePlatGrid .plat-chip').forEach(function(c){c.classList.remove('active')});
+      chip.classList.add('active'); activePlat = k;
+    };
+    ag.appendChild(chip);
+  });
+  ag.querySelector('.plat-chip').click();
+}
+
+async function startAnalyze() {
+  var text = document.getElementById('copyText').value.trim();
+  if (!text) { toast('请粘贴文案内容','warn'); return; }
+  var activePlat = document.querySelector('#analyzePlatGrid .plat-chip.active');
+  var platform = activePlat ? activePlat.dataset.key : 'xiaohongshu';
+  
+  var btn = document.getElementById('analyzeBtn'); btn.disabled = true; btn.textContent = '⏳ 拆解中...';
+  document.getElementById('analyzeLoading').classList.add('show');
+  document.getElementById('analyzeResult').style.display = 'none';
+  
+  try {
+    var resp = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:text, platform:platform}) });
+    var data = await resp.json();
+    if (!data.success) { toast(data.error,'error'); return; }
+    renderAnalysis(data.analysis);
+    toast('拆解完成','success');
+  } catch(e) { toast('错误: '+e.message,'error'); }
+  finally { btn.disabled = false; btn.textContent = '🔍 拆解分析'; document.getElementById('analyzeLoading').classList.remove('show'); }
+}
+
+function renderAnalysis(a) {
+  var r = document.getElementById('analyzeResult');
+  r.style.display = 'block';
+  var html = '<div class="panel"><h3>📊 拆解结果</h3>';
+  
+  if (a.hookAnalysis) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">🎣 钩子分析：</b>'+esc(a.hookAnalysis)+'</div>';
+  if (a.structure) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">📐 内容结构：</b>'+esc(a.structure)+'</div>';
+  
+  if (a.emotionCurve) {
+    html += '<div style="margin:8px 0"><b style="color:var(--cyan)">📈 情绪曲线：</b>';
+    if (typeof a.emotionCurve === 'object') {
+      Object.keys(a.emotionCurve).forEach(function(k){ html += '<span style="margin:2px 6px;padding:2px 10px;border-radius:10px;font-size:11px;background:rgba(138,43,226,0.1);color:var(--purple)">'+k+': '+a.emotionCurve[k]+'</span>'; });
+    }
+    html += '</div>';
+  }
+  
+  if (a.keywords && a.keywords.length) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">🏷️ 关键词：</b>'+a.keywords.map(function(k){return '<span style="margin:2px 4px;padding:2px 8px;border-radius:8px;font-size:11px;background:rgba(0,240,255,0.08);color:var(--cyan)">'+esc(k)+'</span>';}).join('')+'</div>';
+  
+  if (a.reusableTemplate) {
+    html += '<div style="margin:12px 0;padding:14px;background:rgba(0,240,255,0.03);border:1px dashed var(--border);border-radius:8px">';
+    html += '<b style="color:var(--cyan)">📋 可复用模板：</b><pre style="margin-top:8px;font-size:12px;line-height:1.8;color:var(--text);white-space:pre-wrap">'+esc(a.reusableTemplate)+'</pre></div>';
+  }
+  
+  if (a.score) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">⭐ 评分：</b>'+esc(a.score)+'</div>';
+  
+  html += '</div>';
+  r.innerHTML = html;
 }
 
 function getPlats() {
