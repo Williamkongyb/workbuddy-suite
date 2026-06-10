@@ -83,7 +83,14 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 </head>
 <body>
 
-<div class="top"><b>Synapse Content Engine</b><div><span class="badge">v18</span><span class="stat" id="svr" style="margin-left:8px">🟢</span><span class="stat" style="margin-left:8px;cursor:pointer" id="userBadge" onclick="showLogin()">👤</span></div></div>
+<div class="top"><b>Synapse Content Engine</b>
+  <div style="display:flex;gap:2px">
+    <button class="btn btn2" style="padding:4px 8px;font-size:10px;border-radius:6px" onclick="switchTab('write')">✍️ 文案</button>
+    <button class="btn btn2" style="padding:4px 8px;font-size:10px;border-radius:6px" onclick="doOutline()">📋 大纲</button>
+    <button class="btn btn2" style="padding:4px 8px;font-size:10px;border-radius:6px" onclick="switchTab('polish')">✨ 润色</button>
+    <button class="btn btn2" style="padding:4px 8px;font-size:10px;border-radius:6px" onclick="toggleMenu()">📤 导出</button>
+  </div>
+<div><span class="badge">v23</span><span class="stat" id="svr" style="margin-left:8px">🟢</span><span class="stat" style="margin-left:8px;cursor:pointer" id="userBadge" onclick="showLogin()">👤</span></div></div>
 
 <div id="loginOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center">
   <div style="background:var(--card);border-radius:16px;padding:30px;width:340px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.12)">
@@ -220,16 +227,16 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 <div class="panel" id="right">
   <div class="empty" id="rightEmpty">生成内容后<br>使用 AI 润色</div>
   <div id="rightTools" style="display:none">
-    <div class="box"><h3>AI 润色工具</h3>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <button class="btn btn2" style="text-align:left" onclick="doPolish('rewrite')">改写表达</button>
-        <button class="btn btn2" style="text-align:left" onclick="doPolish('expand')">扩写内容</button>
-        <button class="btn btn2" style="text-align:left" onclick="doPolish('compress')">精简压缩</button>
-        <button class="btn btn2" style="text-align:left" onclick="doPolish('formal')">正式语气</button>
-        <button class="btn btn2" style="text-align:left" onclick="doPolish('casual')">口语风格</button>
-        <button class="btn btn2" style="text-align:left" onclick="doPolish('viral')">爆款优化</button>
-        <button class="btn btn2" style="text-align:left;border-color:var(--accent);color:var(--accent)" onclick="doCompare()">版本对比</button>
-        <button class="btn btn2" style="text-align:left" onclick="doRevert()">恢复原版</button>
+    <div class="box"><h3>润色</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('rewrite')">🔄 改写</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('expand')">📈 扩写</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('compress')">📉 精简</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('formal')">💼 正式</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('casual')">💬 口语</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('viral')">🔥 爆款</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px;border-color:var(--accent)" onclick="doCompare()">↔ 对比</button>
+        <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doRevert()">↩ 恢复</button>
       </div>
     </div>
     <div class="box" style="margin-top:8px"><h3>草稿</h3><div id="draftList" style="font-size:10px;color:var(--m);max-height:150px;overflow-y:auto"></div></div>
@@ -267,6 +274,7 @@ function busyOff(){busy=false;document.getElementById('btnGen').disabled=false;d
 function st(s){document.getElementById('status').textContent=s}
 function showOut(){document.getElementById('empty').style.display='none';document.getElementById('out').style.display='block'}
 function showRight(){document.getElementById('right').style.display='block'}
+function switchTab(t){if(t==='polish'){showRight();document.getElementById('rightTools').style.display='block';document.getElementById('rightEmpty').style.display='none';showOut();document.getElementById('editorBox').style.display='block'}else if(t==='write'){document.getElementById('left').style.display='block'}}
 function getPlats(){var a=[];document.querySelectorAll('#plats .pchip.on').forEach(function(c){a.push(c.dataset.k)});return a}
 
 async function init(){
