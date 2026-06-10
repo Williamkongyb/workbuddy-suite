@@ -129,6 +129,11 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
     <div class="inline"><label>目标</label><select id="goal"><option value="">通用</option><option value="traffic">引流涨粉</option><option value="convert">转化带货</option><option value="brand">品牌种草</option><option value="edu">知识科普</option></select></div>
   </div>
   <div class="box">
+    <h3>品牌声音</h3>
+    <div class="inline"><input type="text" id="brandName" placeholder="人设名称, 如: 科技局长" style="width:100%;font-size:10px;padding:4px 8px" onchange="saveBrand()"></div>
+    <div class="inline"><input type="text" id="brandStyle" placeholder="风格描述, 如: 幽默犀利,爱用表情包" style="width:100%;font-size:10px;padding:4px 8px;margin-top:4px" onchange="saveBrand()"></div>
+  </div>
+  <div class="box">
     <h3>字数控制</h3>
     <div class="inline">
       <label>目标平台</label>
@@ -173,6 +178,8 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
           <div class="mi" onclick="showStats()">🔤 字数统计</div>
           <div class="dv"></div>
           <div class="mi" onclick="showHistory()">⏱ 版本历史</div>
+          <div class="dv"></div>
+          <div class="mi" onclick="exportHTML()">🌐 导出 HTML</div>
         </div>
       </span>
     </div>
@@ -305,9 +312,12 @@ function doLogin(){
   }else{t('验证失败','error')}
 }
 checkAuth();
+function saveBrand(){var name=document.getElementById('brandName').value,style=document.getElementById('brandStyle').value;localStorage.setItem('synapse_brand',JSON.stringify({name:name,style:style}))}
+function loadBrand(){try{var b=JSON.parse(localStorage.getItem('synapse_brand')||'{}');if(b.name)document.getElementById('brandName').value=b.name;if(b.style)document.getElementById('brandStyle').value=b.style}catch(e){}}
+loadBrand();
 setInterval(function(){fetch('/api/health').then(function(){document.getElementById('svr').textContent='🟢'}).catch(function(){document.getElementById('svr').textContent='🔴'})},10000);
 
-function doClr(){document.getElementById('out').style.display='none';document.getElementById('empty').style.display='block';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('editorBox').style.display='none';document.getElementById('right').style.display='none';document.getElementById('rightTools').style.display='none';document.getElementById('rightEmpty').style.display='block';document.getElementById('status').textContent='就绪'}
+function doClr(){document.getElementById('out').style.display='none';document.getElementById('empty').style.display='block';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('editorBox').style.display='none';document.getElementById('right').style.display='none';document.getElementById('rightTools').style.display='none';document.getElementById('rightEmpty').style.display='block';document.getElementById('left').style.display='block';document.getElementById('center').style.borderRight='1px solid var(--b)';document.getElementById('status').textContent='就绪'}
 
 function toggleMenu(){var m=document.getElementById('moreMenu');m.style.display=m.style.display==='none'?'block':'none'}
 function exportMD(){var t1=document.getElementById('editTitle').value,body=document.getElementById('editArea').innerText||'';var md='# '+t1+'\n> '+new Date().toLocaleString('zh-CN')+'\n\n'+body;var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='synapse-'+new Date().toISOString().slice(0,10)+'.md';a.click();t('已下载','ok');toggleMenu()}
@@ -315,6 +325,7 @@ function exportJSON(){var out={title:document.getElementById('editTitle').value,
 function copyAll(){navigator.clipboard.writeText(document.getElementById('editArea').innerText||'').then(function(){t('已复制','ok')});toggleMenu()}
 function showStats(){var text=document.getElementById('editArea').innerText||'',words=text.replace(/\s/g,'').length,lines=text.split('\n').length,rt=Math.ceil(words/300);t('字数:'+words+' | 段落:'+lines+' | ≈'+rt+'分钟阅读','ok');toggleMenu()}
 function showHistory(){toggleMenu();t('版本历史功能开发中','warn')}
+function exportHTML(){var t1=document.getElementById('editTitle').value||'Synapse内容',body=document.getElementById('editArea').innerText||'';var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+t1+'</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.8}h1{color:#6366F1}p{font-size:15px;color:#333}</style></head><body><h1>'+t1+'</h1>'+body.split('\n').map(function(l){return'<p>'+l+'</p>'}).join('')+'<hr><small>Synapse Content Engine · '+new Date().toISOString().slice(0,10)+'</small></body></html>';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download='synapse-'+new Date().toISOString().slice(0,10)+'.html';a.click();t('HTML已下载','ok');toggleMenu()}
 
 function doSearch(){var p=document.getElementById('sp');p.style.display=p.style.display==='none'?'block':'none'}
 
@@ -324,13 +335,14 @@ async function doGen(){
   var cats=getCats();var custom=document.getElementById('customPrompt').value.trim();
   var tone=document.getElementById('tone').value,hstyle=document.getElementById('hstyle').value;
   var aud=document.getElementById('audience').value,tpl=document.getElementById('template').value,goal=document.getElementById('goal').value;
+  var brandName=document.getElementById('brandName').value,brandStyle=document.getElementById('brandStyle').value;
   saveSettings();var wr=getWordRange();S.abortCtrl=new AbortController();
   document.getElementById('si1').className='si active';document.getElementById('si2').className='si';document.getElementById('si3').className='si';document.getElementById('steps').className='steps on';
   busyOn('🔬 调研...');st('调研中');doClr();showOut();
   document.getElementById('btnGen').textContent='停止';document.getElementById('btnGen').onclick=stopGen;document.getElementById('btnGen').style.background='#EF4444';
   t('方向:'+cats.length+' | 字数:'+wr[0]+'-'+wr[1],'warn');
   try{
-    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle,audience:aud,template:tpl,goal:goal}),signal:S.abortCtrl.signal});
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle,audience:aud,template:tpl,goal:goal,brandName:brandName,brandStyle:brandStyle}),signal:S.abortCtrl.signal});
     document.getElementById('si1').className='si done';document.getElementById('si2').className='si active';document.getElementById('lt').textContent='✍️ 撰写中...';
     var d=await r.json();if(!d.success){t(d.error,'error');resetGenBtn();return}
     document.getElementById('si2').className='si done';document.getElementById('si3').className='si done';
