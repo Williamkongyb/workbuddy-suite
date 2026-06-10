@@ -175,16 +175,19 @@ function busyOff(){busy=false;document.getElementById('btnGen').disabled=false;d
 function st(s){document.getElementById('status').textContent=s}
 function showOut(){document.getElementById('empty').style.display='none';document.getElementById('out').style.display='block'}
 async function doPolish(action){
-  var text=document.getElementById('editArea').textContent;
-  if(!text.trim()){t('没有可编辑的内容','warn');return}
+  var el=document.getElementById('editArea');
+  var text=(el.innerText||el.textContent||'').trim();
+  if(!text){t('编辑区为空，请先生成内容','warn');return}
   var actionNames={rewrite:'改写表达',expand:'扩写内容',compress:'精简压缩',formal:'正式语气',casual:'口语风格',viral:'爆款优化'};
-  t('AI润色中: '+actionNames[action]+'...','warn');
+  var btn=event.target;btn.disabled=true;btn.textContent='润色中...';
+  t('AI润色: '+actionNames[action]+'...','warn');
   try{
     var r=await fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,action:action})});
     var d=await r.json();
-    if(d.success){document.getElementById('editArea').textContent=d.polished;document.getElementById('wordCount').textContent=d.polished.length;t('润色完成','ok')}
+    if(d.success){el.innerText='';el.textContent=d.polished;document.getElementById('wordCount').textContent=d.polished.length;t('润色完成','ok')}
     else t(d.error,'error');
-  }catch(e){t('润色失败','error')}
+  }catch(e){t('润色失败:'+e.message,'error')}
+  btn.disabled=false;btn.textContent=actionNames[action];
 }
 
 function saveDraft(){
@@ -329,21 +332,37 @@ function showHotTopics(topics,cat){
     topics.map(function(tp,i){return'<div class="rcard" style="cursor:pointer" onclick="document.getElementById(\'topic\').value=\''+(tp.title||'').replace(/'/g,'\\\'')+'\';doGen()"><div class="num">#'+(i+1)+' · '+tp.score+'热度</div><div class="ang">'+sc(tp.title)+'</div><div class="pt">'+sc(tp.source||'')+'</div></div>'}).join('');
 }
 
+var allPlatforms={},currentPlatform='';
+
 function showPlatforms(d,scs){
-  // 注入编辑工作台（取第一个平台内容）
-  var keys=Object.keys(d||{});if(!keys.length)return;
-  var k=keys[0],p=d[k],pl=PLATS[k]||{},s=scs&&scs[k]?scs[k]:null;
-  
-  // 显示编辑器
+  allPlatforms=d;var keys=Object.keys(d||{});if(!keys.length)return;
+  var k=keys[0];injectPlatform(k,d,scs);
+  if(keys.length>1){
+    var shtml='<span style="font-size:10px;color:var(--m);margin-left:8px">切换平台</span> <select id="platSw" onchange="switchPlat(this.value)" style="background:var(--i);color:var(--c);border:1px solid var(--b);border-radius:4px;font-size:10px;padding:2px 6px;margin-left:4px">';
+    keys.forEach(function(k2){shtml+='<option value="'+k2+'"'+'>'+((PLATS[k2]||{}).icon||'')+' '+((d[k2].title||k2)+'').substring(0,18)+'</option>'});
+    shtml+='</select>';
+    document.getElementById('editorMeta').innerHTML+=shtml;
+  }
+}
+
+function injectPlatform(k,d,scs){
+  currentPlatform=k;var p=d[k],pl=PLATS[k]||{},s=scs&&scs[k]?scs[k]:null;
   document.getElementById('editorBox').style.display='block';
-  document.getElementById('editorMeta').textContent=pl.icon+' '+pl.name+' | '+(p.body||'').length+'字'+(s&&s.total?' | Critic评分⭐'+s.total:'');
+  document.getElementById('editorMeta').textContent=pl.icon+' '+pl.name+' | '+(p.body||'').length+'字'+(s&&s.total?' | ⭐'+s.total:'');
   document.getElementById('editTitle').value=p.title||'';
-  document.getElementById('editArea').textContent=p.body||'';
+  var el=document.getElementById('editArea');el.innerHTML='';el.textContent=p.body||'';
   document.getElementById('wordCount').textContent=(p.body||'').length;
   document.getElementById('rightEmpty').style.display='none';
   document.getElementById('rightTools').style.display='block';
-  showRight();
-  refreshDrafts();
+  showRight();refreshDrafts();
+}
+
+function switchPlat(k){
+  if(!allPlatforms[k])return;
+  injectPlatform(k,allPlatforms,null);
+  var sel=document.getElementById('platSw');if(!sel)return;
+  var keys=Object.keys(allPlatforms);
+  sel.innerHTML=keys.map(function(k2){return'<option value="'+k2+'"'+(k2===k?' selected':'')+'>'+((PLATS[k2]||{}).icon||'')+' '+((allPlatforms[k2].title||k2)+'').substring(0,18)+'</option>'}).join('');
 }
 
 function showViral(items,plat){
