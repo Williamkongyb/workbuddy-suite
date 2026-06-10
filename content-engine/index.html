@@ -116,6 +116,12 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
     <div class="inline"><label>大纲</label><button class="btn btn2" style="padding:4px 10px;font-size:10px" onclick="doOutline()">AI生成</button><span id="outlineResult" style="font-size:9px;color:var(--accent);margin-left:4px"></span></div>
   </div>
   <div class="box">
+    <h3>高级设定</h3>
+    <div class="inline"><label>受众</label><select id="audience"><option value="">通用</option><option value="genz">Z世代</option><option value="expert">行业专家</option><option value="mom">宝妈群体</option><option value="student">学生党</option><option value="boss">企业管理</option></select></div>
+    <div class="inline"><label>模板</label><select id="template"><option value="">灵活</option><option value="review">种草测评</option><option value="tutorial">教程指南</option><option value="story">故事叙事</option><option value="opinion">观点评论</option><option value="list">清单合集</option></select></div>
+    <div class="inline"><label>目标</label><select id="goal"><option value="">通用</option><option value="traffic">引流涨粉</option><option value="convert">转化带货</option><option value="brand">品牌种草</option><option value="edu">知识科普</option></select></div>
+  </div>
+  <div class="box">
     <h3>字数控制</h3>
     <div class="inline">
       <label>目标平台</label>
@@ -222,6 +228,8 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
         <button class="btn btn2" style="text-align:left" onclick="doPolish('formal')">正式语气</button>
         <button class="btn btn2" style="text-align:left" onclick="doPolish('casual')">口语风格</button>
         <button class="btn btn2" style="text-align:left" onclick="doPolish('viral')">爆款优化</button>
+        <button class="btn btn2" style="text-align:left;border-color:var(--accent);color:var(--accent)" onclick="doCompare()">版本对比</button>
+        <button class="btn btn2" style="text-align:left" onclick="doRevert()">恢复原版</button>
       </div>
     </div>
     <div class="box" style="margin-top:8px"><h3>草稿</h3><div id="draftList" style="font-size:10px;color:var(--m);max-height:150px;overflow-y:auto"></div></div>
@@ -307,13 +315,14 @@ async function doGen(){
   var plats=getPlats();if(!plats.length){t('请选择平台','warn');return}
   var cats=getCats();var custom=document.getElementById('customPrompt').value.trim();
   var tone=document.getElementById('tone').value,hstyle=document.getElementById('hstyle').value;
+  var aud=document.getElementById('audience').value,tpl=document.getElementById('template').value,goal=document.getElementById('goal').value;
   saveSettings();var wr=getWordRange();S.abortCtrl=new AbortController();
   document.getElementById('si1').className='si active';document.getElementById('si2').className='si';document.getElementById('si3').className='si';document.getElementById('steps').className='steps on';
   busyOn('🔬 调研...');st('调研中');doClr();showOut();
   document.getElementById('btnGen').textContent='停止';document.getElementById('btnGen').onclick=stopGen;document.getElementById('btnGen').style.background='#EF4444';
   t('方向:'+cats.length+' | 字数:'+wr[0]+'-'+wr[1],'warn');
   try{
-    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle}),signal:S.abortCtrl.signal});
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle,audience:aud,template:tpl,goal:goal}),signal:S.abortCtrl.signal});
     document.getElementById('si1').className='si done';document.getElementById('si2').className='si active';document.getElementById('lt').textContent='✍️ 撰写中...';
     var d=await r.json();if(!d.success){t(d.error,'error');resetGenBtn();return}
     document.getElementById('si2').className='si done';document.getElementById('si3').className='si done';
@@ -363,6 +372,7 @@ function switchPlat(k){if(!allPlatforms[k])return;injectPlatform(k,allPlatforms,
 function showViral(items,plat){document.getElementById('vbox').style.display='block';document.getElementById('vg').innerHTML='<div style="font-size:10px;color:var(--m);margin-bottom:6px">'+(PLATS[plat]||{}).name+' Top'+items.length+'爆款</div>'+items.map(function(x,i){var a=x.a,p=x.p,sc2=parseInt(a.score)||0,scC=sc2>=80?'#22C55E':sc2>=60?'#F59E0B':'#EF4444';return'<div class="vcard"><span class="score" style="float:right;color:'+scC+'">⭐'+sc2+'</span><div class="vt">#'+(i+1)+' '+sc((p.title||'').substring(0,50))+'</div>'+(a.hookAnalysis?'<div class="vd">🎣 '+sc(a.hookAnalysis)+'</div>':'')+(a.reusableTemplate?'<div class="vs">📋 '+sc(a.reusableTemplate)+'</div>':'')+'</div>';}).join('');}
 
 async function doPolish(action){var el=document.getElementById('editArea');var text=(el.innerText||el.textContent||'').trim();if(!text){t('编辑区为空','warn');return}
+  lastOriginal=text;
   var names={rewrite:'改写',expand:'扩写',compress:'精简',formal:'正式',casual:'口语',viral:'爆款',translate:'翻译',format:'排版'};
   if(action==='translate'||action==='format'){t('AI'+names[action]+'中...','warn');try{var r=await fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,action:action})});var d=await r.json();if(d.success){el.innerHTML='';el.textContent=d.polished;document.getElementById('wordCount').textContent=d.polished.length;t('完成','ok')}else t(d.error,'error')}catch(e){t('失败','error')}return}
   var btn=event.target;btn.disabled=true;btn.textContent='润色中...';t('AI'+names[action]+'...','warn');
@@ -376,6 +386,10 @@ function loadDraft(){var drafts=JSON.parse(localStorage.getItem('synapse_drafts'
 function refreshDrafts(){var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');document.getElementById('draftList').innerHTML=drafts.map(function(d,i){return'<div style="padding:4px 0;border-bottom:1px solid var(--b);cursor:pointer" onclick="loadDraftItem('+i+')">'+(i+1)+'. '+(d.title||'无标题').substring(0,30)+'<span style="float:right">'+d.time.slice(0,10)+'</span></div>'}).join('');}
 function loadDraftItem(i){var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');if(!drafts[i])return;document.getElementById('editTitle').value=drafts[i].title;var el=document.getElementById('editArea');el.innerHTML='';el.textContent=drafts[i].text;el.contentEditable='true';document.getElementById('wordCount').textContent=drafts[i].text.length;document.getElementById('editorBox').style.display='block';document.getElementById('rightTools').style.display='block';document.getElementById('rightEmpty').style.display='none';showRight();showOut();}
 function copyEdited(){navigator.clipboard.writeText(document.getElementById('editArea').innerText||'').then(function(){t('已复制','ok')});}
+var lastOriginal='';function saveOriginal(){lastOriginal=document.getElementById('editArea').innerText||''}
+function doCompare(){var el=document.getElementById('editArea');var current=el.innerText||'';saveOriginal();
+  var orig=lastOriginal||'暂无原版';el.textContent='═══ 原版 ═══\n'+orig.substring(0,800)+'\n\n═══ 当前版 ═══\n'+current.substring(0,800);document.getElementById('wordCount').textContent=el.textContent.length;t('双栏对比已展示','ok')}
+function doRevert(){if(!lastOriginal){t('无原版可恢复','warn');return};document.getElementById('editArea').textContent=lastOriginal;document.getElementById('wordCount').textContent=lastOriginal.length;t('已恢复原版','ok')}
 async function doOutline(){var topic=document.getElementById('topic').value.trim();if(!topic){t('先输入主题','warn');return}
   t('生成大纲中...','warn');var cats=getCats();
   try{var r=await fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'为【'+topic+'】生成文章大纲，输出5个要点，每个一行，用-开头',action:'format'})});var d=await r.json();
