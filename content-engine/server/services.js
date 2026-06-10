@@ -6,9 +6,9 @@ const https = require('https');
 const url = require('url');
 const { PLATFORMS, CATEGORIES } = require('./config');
 
-const SF_API_KEY = 'sk-uvzcbywuncvtchdmxmoyehzouehoicmwcjdznkprufozrdpj';
-const SF_BASE = 'https://api.siliconflow.cn/v1';
-const MODEL = 'deepseek-ai/DeepSeek-V3';
+const SF_API_KEY = process.env.SF_API_KEY || 'sk-uvzcbywuncvtchdmxmoyehzouehoicmwcjdznkprufozrdpj';
+const SF_BASE = process.env.SF_BASE || 'https://api.siliconflow.cn/v1';
+const MODEL = process.env.SF_MODEL || 'deepseek-ai/DeepSeek-V3';
 
 var cache = {};
 

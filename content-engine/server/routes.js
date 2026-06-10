@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { PLATFORMS, CATEGORIES } = require('./config');
-const { fetchHotTopics, researchTopic, generatePlatformContent, scoreContent, analyzeCopy } = require('./services');
+const { fetchHotTopics, researchTopic, generatePlatformContent, scoreContent, analyzeCopy, apiCall, parseJSON } = require('./services');
 
 function setupRoutes(app) {
 
@@ -29,7 +29,7 @@ function setupRoutes(app) {
   });
 
   // API: 健康
-  app.get('/api/health', function(req, res) { res.json({ status: 'ok', version: 'refactor-v13' }); });
+  app.get('/api/health', function(req, res) { res.json({ status: 'ok', version: 'v17.0' }); });
 
   // API: 生成内容
   app.post('/api/generate', async function(req, res) {
@@ -62,7 +62,6 @@ function setupRoutes(app) {
       var { keyword, platforms } = req.body;
       if (!keyword) return res.status(400).json({ error: '请提供关键词' });
       var platNames = (platforms||[]).map(function(k){ return PLATFORMS[k] ? PLATFORMS[k].name : k; }).join('、');
-      var { apiCall, parseJSON } = require('./services');
       var resp = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.7, max_tokens: 1500, messages: [{ role: 'user', content: '为'+platNames+'平台，搜索"'+keyword+'"的热门话题10条。JSON数组含title/score/source/brief。' }] });
       var topics = parseJSON(resp.choices ? resp.choices[0].message.content : '') || [];
       res.json({ success: true, keyword: keyword, topics: topics });
@@ -76,7 +75,6 @@ function setupRoutes(app) {
       if (!plat) return res.status(400).json({ error: '未知平台' });
       var cat = req.body.category ? CATEGORIES[req.body.category] : null;
       var catPrompt = cat ? '领域：' + cat.name + '。' : '';
-      var { apiCall, parseJSON } = require('./services');
       var resp = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.8, max_tokens: 3000, messages: [{ role: 'user', content: '模拟'+plat.name+'平台今天Top10爆款内容。'+catPrompt+'每项含title/body。JSON数组。' }] });
       var posts = parseJSON(resp.choices ? resp.choices[0].message.content : '') || [];
       res.json({ success: true, platform: req.body.platform, posts: posts });
@@ -107,7 +105,6 @@ function setupRoutes(app) {
       var { keyword, platforms, searchType } = req.body;
       if (!keyword) return res.status(400).json({ error: '请提供关键词' });
       var genResults = {}, analyzed = [];
-      var { apiCall, parseJSON } = require('./services');
       
       for (var pi = 0; pi < Math.min((platforms||[]).length, 2); pi++) {
         var pk = platforms[pi], plat = PLATFORMS[pk]; if (!plat) continue;
@@ -137,7 +134,6 @@ function setupRoutes(app) {
     try {
       var { text, action, tone } = req.body;
       if (!text || !action) return res.status(400).json({ error: '请提供文本和操作' });
-      var { apiCall } = require('./services');
       var actionMap = {
         rewrite: '改写以下文本，保持原意但换一种表达方式',
         expand: '扩写以下文本，增加细节和例子',
