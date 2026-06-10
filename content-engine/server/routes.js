@@ -144,7 +144,9 @@ function setupRoutes(app) {
         compress: '精简以下文本，保留核心观点',
         formal: '将以下文本改为正式专业的语气',
         casual: '将以下文本改为轻松口语化的语气',
-        viral: '将以下文本优化为更有爆款潜力的风格'
+        viral: '将以下文本优化为更有爆款潜力的风格',
+        translate: '将以下中文翻译为英文',
+        format: '将以下文本自动排版：合理分段、加小标题、重点加粗。保持原文不变。'
       };
       var instruction = actionMap[action] || '优化以下文本';
       if (tone) instruction += '，语气：' + tone;
