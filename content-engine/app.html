@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse — 赛纳普斯·灵枢</title>
+<style>
+:root{--ac:#6366F1;--ac2:#7C3AED;--bg:#FAFBFC;--sb:#F1F3F5;--b:#E5E7EB;--t:#1E293B;--t2:#64748B;--t3:#94A3B8;--r:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Inter','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--t);overflow:hidden;height:100vh;font-size:13px}
+.app{display:flex;height:100vh}
+.sidebar{width:200px;background:var(--sb);border-right:1px solid var(--b);display:flex;flex-direction:column;flex-shrink:0}
+.sb-header{padding:14px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px}
+.sb-header .dots{display:flex;gap:3px}
+.sb-header .dots span{width:5px;height:5px;background:var(--ac);border-radius:50%}
+.sb-header .dots span:nth-child(2){background:var(--ac2)}
+.sb-header .dots span:nth-child(3){opacity:.5}
+.sb-header .t1{font-weight:700;font-size:14px;color:var(--t)}
+.sb-header .t2{font-size:10px;color:var(--t3)}
+.sb-nav{flex:1;overflow-y:auto;padding:8px}
+.sb-sec{margin-bottom:12px}
+.sb-sec .lb{padding:4px 12px;font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.sb-it{padding:6px 12px;border-radius:6px;font-size:12px;color:var(--t2);cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:8px}
+.sb-it:hover{background:rgba(99,102,241,.06);color:var(--ac)}
+.sb-it.on{background:rgba(99,102,241,.1);color:var(--ac);font-weight:600}
+.sb-it .ic{width:16px;text-align:center;font-size:12px}
+.sb-ft{padding:10px 16px;border-top:1px solid var(--b);font-size:10px;color:var(--t3)}
+.sb-ft .kb{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:4px;font-size:9px;margin:0 2px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.mbar{padding:10px 20px;background:rgba(255,255,255,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
+.mbar .tabb{display:flex;gap:2px}
+.mbar .tab{padding:5px 12px;border-radius:6px;font-size:11px;color:var(--t2);cursor:pointer;transition:.12s;border:1px solid transparent}
+.mbar .tab:hover{color:var(--ac);background:rgba(99,102,241,.04)}
+.mbar .tab.on{border-color:rgba(99,102,241,.2);color:var(--ac)}
+.mbar .srch{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--bg);border:1px solid var(--b);border-radius:6px;font-size:11px;color:var(--t3);cursor:pointer;transition:.12s}
+.mbar .srch:hover{border-color:var(--ac);color:var(--ac)}
+.mbar .srch .kb{background:rgba(0,0,0,.05);padding:1px 5px;border-radius:3px;font-size:9px}
+.mcnt{flex:1;overflow:auto;position:relative}
+.mcnt iframe{width:100%;height:100%;border:none}
+.cmd{display:none;position:fixed;top:15%;left:50%;transform:translateX(-50%);width:480px;background:var(--bg);border:1px solid var(--b);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:200;overflow:hidden}
+.cmd.on{display:block}
+.cmd input{width:100%;padding:14px 18px;border:none;outline:none;font-size:14px;color:var(--t);background:transparent}
+.cmd .clist{max-height:300px;overflow-y:auto;border-top:1px solid var(--b)}
+.cmd .ci{padding:10px 18px;font-size:12px;color:var(--t2);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.cmd .ci:hover{background:rgba(99,102,241,.06);color:var(--ac)}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.2);z-index:199}
+.overlay.on{display:block}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 16px;background:#1E293B;color:#fff;border-radius:8px;font-size:11px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99}
+.inp{width:100%;padding:8px;border:1px solid var(--b);border-radius:6px;font-size:12px;outline:none}
+.inp:focus{border-color:var(--ac)}
+.btn{background:var(--ac);color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;padding:8px 16px;font-size:12px}
+.btn:hover{background:#4F46E5}
+.card{background:#fff;border:1px solid var(--b);border-radius:8px;padding:14px;transition:.12s}
+.card:hover{border-color:var(--ac)}
+.h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.hint{color:var(--t2);font-size:12px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+  <div class="sb-header">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div><div class="t1">Synapse</div><div class="t2">赛纳普斯·灵枢</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec"><div class="lb">Core</div>
+      <div class="sb-it on" data-view="tools" onclick="go('tools')"><span class="ic">🧰</span>Toolbox</div>
+      <div class="sb-it" data-view="write" onclick="go('write')"><span class="ic">✍️</span>Quick Write</div>
+    </div>
+    <div class="sb-sec"><div class="lb">Studio</div>
+      <div class="sb-it" data-view="topics" onclick="go('topics')"><span class="ic">💡</span>Topics</div>
+      <div class="sb-it" data-view="calendar" onclick="go('calendar')"><span class="ic">📅</span>Calendar</div>
+      <div class="sb-it" data-view="competitors" onclick="go('competitors')"><span class="ic">🔬</span>Competitors</div>
+    </div>
+    <div class="sb-sec"><div class="lb">Optimize</div>
+      <div class="sb-it" data-view="seo" onclick="go('seo')"><span class="ic">📊</span>SEO Score</div>
+      <div class="sb-it" data-view="abtest" onclick="go('abtest')"><span class="ic">⚖️</span>A/B Test</div>
+      <div class="sb-it" data-view="compliance" onclick="go('compliance')"><span class="ic">🛡️</span>Compliance</div>
+    </div>
+    <div class="sb-sec"><div class="lb">Share</div>
+      <div class="sb-it" data-view="share" onclick="go('share')"><span class="ic">🔗</span>Review</div>
+    </div>
+  </div>
+  <div class="sb-ft">Press <span class="kb">⌘K</span> to search</div>
+</div>
+
+<div class="main">
+  <div class="mbar">
+    <div class="tabb" id="tabs"><div class="tab on">🧰 Toolbox</div></div>
+    <div class="srch" onclick="openCmd()">Search commands... <span class="kb">⌘K</span></div>
+  </div>
+  <div class="mcnt" id="mcnt">
+    <iframe src="http://localhost:3099" style="width:100%;height:100%;border:none"></iframe>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeCmd()"></div>
+<div class="cmd" id="cmdPalette">
+  <input type="text" id="cmdInput" placeholder="Type a command..." oninput="filterCmds()" onkeydown="navigateCmd(event)">
+  <div class="clist" id="cmdList"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var V={tools:{t:'Toolbox',i:'🧰',d:'All content generation'},write:{t:'Quick Write',i:'✍️',d:'Blank canvas'},topics:{t:'Topics',i:'💡',d:'AI topic mining'},calendar:{t:'Calendar',i:'📅',d:'Content planning'},competitors:{t:'Competitors',i:'🔬',d:'Analyze competitors'},seo:{t:'SEO Score',i:'📊',d:'Search optimization'},abtest:{t:'A/B Test',i:'⚖️',d:'Variant comparison'},compliance:{t:'Compliance',i:'🛡️',d:'Content scanning'},share:{t:'Review',i:'🔗',d:'Team sharing'}};
+
+function go(id){
+  document.querySelectorAll('.sb-it').forEach(function(x){x.classList.remove('on')});
+  document.querySelector('[data-view="'+id+'"]').classList.add('on');
+  var v=V[id];if(!v)return;
+  document.getElementById('tabs').innerHTML='<div class="tab on">'+v.i+' '+v.t+'</div>';
+  var c=document.getElementById('mcnt');
+  if(id==='tools'){c.innerHTML='<iframe src="http://localhost:3099" style="width:100%;height:100%;border:none"></iframe>';return}
+  if(id==='topics'){renderTopics();return}
+  if(id==='calendar'){renderCalendar();return}
+  if(id==='competitors'){renderCompetitors();return}
+  if(id==='seo'){renderSEO();return}
+  if(id==='abtest'){renderABTest();return}
+  if(id==='compliance'){renderCompliance();return}
+  if(id==='write'){renderQuickWrite();return}
+  c.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--t3)"><div style="font-size:32px;opacity:.3">'+v.i+'</div><div>'+v.d+'</div></div>';
+}
+
+function openCmd(){document.getElementById('cmdPalette').classList.add('on');document.getElementById('overlay').classList.add('on');document.getElementById('cmdInput').value='';document.getElementById('cmdInput').focus();filterCmds()}
+function closeCmd(){document.getElementById('cmdPalette').classList.remove('on');document.getElementById('overlay').classList.remove('on')}
+function filterCmds(){var q=document.getElementById('cmdInput').value.toLowerCase();document.getElementById('cmdList').innerHTML=Object.keys(V).filter(function(k){return V[k].t.toLowerCase().includes(q)||V[k].d.toLowerCase().includes(q)}).map(function(k){return'<div class="ci" onclick="go(\''+k+'\');closeCmd()"><span>'+V[k].i+' '+V[k].t+'</span><span style="font-size:9px;color:var(--t3)">'+V[k].d+'</span></div>'}).join('')}
+function navigateCmd(e){if(e.key==='Escape')closeCmd();if(e.key==='Enter'){var s=document.querySelector('.cmd .ci:hover');if(!s)s=document.querySelector('.cmd .ci');if(s)s.click()}}
+document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openCmd()}if(e.key==='Escape')closeCmd()});
+
+function t(m,ty){var bg={error:'#EF4444',ok:'#22C55E',warn:'#F59E0B'};var e=document.getElementById('toast');e.style.background=bg[ty]||'#1E293B';e.style.opacity='1';e.textContent=m;clearTimeout(e._t);e._t=setTimeout(function(){e.style.opacity='0'},2500)}
+
+async function api(endpoint,data){var r=await fetch('http://localhost:3099'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});return r.json()}
+
+function renderTopics(){
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">💡 Topic Discovery</h2><p class="hint">AI mines trending topics from your niche</p><div style="display:flex;gap:8px;margin-bottom:16px"><input class="inp" id="tkw" placeholder="Enter a niche or keyword..." style="flex:1"><button class="btn" onclick="mineTopics()">Mine</button></div><div id="tr" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px"></div></div>';
+}
+async function mineTopics(){
+  var kw=document.getElementById('tkw').value.trim();if(!kw){t('Enter a keyword','warn');return};t('Mining topics...','warn');
+  var d=await api('/api/polish',{text:'Generate 15 content topics about ['+kw+'], different angles. One per line starting with -.',action:'format'});
+  if(d.success){
+    var topics=d.polished.split('\n').filter(function(l){return l.trim()});
+    document.getElementById('tr').innerHTML=topics.map(function(tp,i){return'<div class="card" style="cursor:pointer" onclick="useTopic(\''+tp.replace(/-/,'').replace(/'/g,'\\\'').trim()+'\')"><div style="font-size:10px;color:var(--ac);font-weight:600;margin-bottom:3px">#'+(i+1)+'</div><div style="font-size:12px">'+tp.replace(/^-/,'').trim()+'</div></div>'}).join('');
+    t(topics.length+' topics','ok')}
+}
+function useTopic(tp){t('Selected: '+tp,'ok');go('tools')}
+
+function renderCalendar(){
+  var dates=[];for(var i=0;i<14;i++){var d=new Date();d.setDate(d.getDate()+i);dates.push(d.toLocaleDateString('zh-CN',{month:'short',day:'numeric',weekday:'short'}))}
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">📅 Content Calendar</h2><p class="hint">Plan your publishing schedule</p><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">'+dates.map(function(d,i){var td=i===0;return'<div style="padding:10px 6px;background:'+(td?'var(--ac)':'#fff')+';color:'+(td?'#fff':'var(--t)')+';border:1px solid var(--b);border-radius:8px;text-align:center;cursor:pointer;font-size:10px"><div style="font-weight:600;margin-bottom:2px">'+d.split(' ')[0]+'</div><div>'+d.split(' ')[1]+'</div></div>'}).join('')+'</div></div>';
+}
+
+function renderCompetitors(){
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">🔬 Competitor Analysis</h2><p class="hint">Deconstruct competitor copywriting strategy</p><div style="display:flex;gap:8px;margin-bottom:16px"><input class="inp" id="cur" placeholder="Paste URL or description..." style="flex:1"><button class="btn" onclick="analyzeComp()">Analyze</button></div><div id="cr"></div></div>';
+}
+async function analyzeComp(){
+  var u=document.getElementById('cur').value.trim();if(!u){t('Enter text','warn');return};t('Analyzing...','warn');
+  var d=await api('/api/polish',{text:'Analyze this content strategy: '+u+'\nExtract: hook methods, structure patterns, reusable templates, audience targeting.',action:'format'});
+  if(d.success){document.getElementById('cr').innerHTML='<div class="card" style="white-space:pre-wrap;line-height:1.7">'+d.polished+'</div>';t('Complete','ok')}
+}
+
+function renderSEO(){
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">📊 SEO Score</h2><p class="hint">Analyze search optimization</p><textarea id="st" class="inp" placeholder="Paste content..." style="height:200px;resize:none"></textarea><br><button class="btn" style="margin-top:8px" onclick="analyzeSEO()">Score</button><div id="sr"></div></div>';
+}
+async function analyzeSEO(){
+  var tx=document.getElementById('st').value.trim();if(!tx){t('Paste content','warn');return};t('Scoring...','warn');
+  var d=await api('/api/polish',{text:'Analyze SEO for this content. Rate: 1.title appeal(1-10) 2.keyword density 3.structure 4.improvements. Content:'+tx.substring(0,500),action:'format'});
+  if(d.success){document.getElementById('sr').innerHTML='<div class="card" style="margin-top:8px;white-space:pre-wrap;line-height:1.7">'+d.polished+'</div>';t('Complete','ok')}
+}
+
+function renderABTest(){
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">⚖️ A/B Test</h2><p class="hint">Generate 3 copy variants</p><input class="inp" id="abt" placeholder="Enter topic..."><button class="btn" style="margin-top:8px" onclick="generateAB()">Generate</button><div id="abr" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px"></div></div>';
+}
+async function generateAB(){
+  var tp=document.getElementById('abt').value.trim();if(!tp){t('Enter topic','warn');return};t('Generating...','warn');
+  var d=await api('/api/generate',{topic:tp+' (produce 3 distinct versions separated by ###)',platforms:['xiaohongshu']});
+  if(d.success){
+    var vv=(d.platforms.xiaohongshu.body||'').split('###').filter(function(s){return s.trim()}).slice(0,3);
+    var cs=['#6366F1','#7C3AED','#EC4899'];
+    document.getElementById('abr').innerHTML=vv.map(function(v,i){return'<div class="card" style="border-left:3px solid '+cs[i]+'"><div style="font-weight:700;color:'+cs[i]+';margin-bottom:4px;font-size:11px">Variant '+(i+1)+'</div><div style="font-size:12px;line-height:1.6">'+v.substring(0,400)+'</div></div>'}).join('');
+    t('3 variants','ok')}
+}
+
+function renderCompliance(){
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">🛡️ Compliance</h2><p class="hint">Detect sensitive words</p><textarea id="cpt" class="inp" placeholder="Paste content to scan..." style="height:200px;resize:none"></textarea><br><button class="btn" style="margin-top:8px" onclick="scanCompliance()">Scan</button><div id="cpr"></div></div>';
+}
+async function scanCompliance(){
+  var tx=document.getElementById('cpt').value.trim();if(!tx){t('Paste content','warn');return};t('Scanning...','warn');
+  var d=await api('/api/polish',{text:'Check for sensitive words, violations, exaggerated claims. List risks:'+tx.substring(0,800),action:'format'});
+  if(d.success){document.getElementById('cpr').innerHTML='<div class="card" style="margin-top:8px;white-space:pre-wrap;line-height:1.7">'+d.polished+'</div>';t('Complete','ok')}
+}
+
+function renderQuickWrite(){
+  document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><h2 class="h2">✍️ Quick Write</h2><p class="hint">Start writing. Ctrl+Enter to generate draft.</p><textarea class="inp" placeholder="Write here..." style="height:400px;resize:none;line-height:1.8;font-size:13px" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==\'Enter\'){qwg(this.value)}"></textarea></div>';
+}
+async function qwg(text){if(!text.trim())return;t('Generating...','warn');
+  var d=await api('/api/generate',{topic:text,platforms:['xiaohongshu']});
+  if(d.success){var v=d.platforms.xiaohongshu;document.getElementById('mcnt').innerHTML='<div style="padding:30px 40px"><a href="#" onclick="go(\'write\')" style="font-size:10px;color:var(--ac);text-decoration:none">← Back</a><h2 class="h2" style="margin-top:8px">'+v.title+'</h2><div style="white-space:pre-wrap;line-height:1.8;font-size:13px;margin-top:12px">'+v.body+'</div></div>'}
+}
+
+t('Synapse ready — ⌘K to search');
+</script>
+</body>
+</html>
