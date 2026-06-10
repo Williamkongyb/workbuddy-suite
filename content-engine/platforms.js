@@ -282,6 +282,24 @@ const CATEGORIES = {
     styleNotes: "温柔治愈风，心理学专业视角",
     hotSources: ["壹心理", "简单心理"],
     templates: { hooks: [], structures: [] }
+  },
+  local_life: {
+    key: "local_life", name: "本地生活", icon: "🏪",
+    persona: "本地生活推荐官", personaTrait: "接地气、实用、有烟火气",
+    contentElements: "探店测评 + 生活攻略 + 吃喝玩乐 + 本地资讯",
+    primaryPlatforms: ["xiaohongshu", "douyin", "kuaishou"],
+    styleNotes: "亲切接地气风格，种草感强，实用导向",
+    hotSources: ["大众点评", "小红书本地", "抖音同城"],
+    templates: { hooks: [], structures: [] }
+  },
+  education: {
+    key: "education", name: "教育培训", icon: "📚",
+    persona: "教育领域专家顾问", personaTrait: "专业、系统、有启发性",
+    contentElements: "学习方法 + 考试干货 + 知识科普 + 成长路径",
+    primaryPlatforms: ["zhihu", "bilibili", "gongzhonghao"],
+    styleNotes: "专业但不枯燥，知识密度高，循循善诱",
+    hotSources: ["得到", "樊登读书", "B站知识区"],
+    templates: { hooks: [], structures: [] }
   }
 };
 
