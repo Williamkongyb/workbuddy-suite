@@ -10,10 +10,23 @@ const fs = require('fs');
 const path = require('path');
 const { PLATFORMS, CATEGORIES, HOT_SOURCES } = require('./platforms.js');
 
+// 进程守护 — 防止崩溃退出
+process.on('uncaughtException', function(err) { console.error('UNCAUGHT:', err.message); });
+process.on('unhandledRejection', function(err) { console.error('REJECTION:', err.message); });
+
 const PORT = 3099;
 const SF_API_KEY = 'sk-uvzcbywuncvtchdmxmoyehzouehoicmwcjdznkprufozrdpj';
 const SF_API_BASE = 'https://api.siliconflow.cn/v1';
 const MODEL = 'deepseek-ai/DeepSeek-V3';
+
+// 内存缓存（5分钟TTL）
+var cache = {};
+function cached(key, fn, ttl) {
+  var now = Date.now(), entry = cache[key];
+  if (entry && (now - entry.time) < (ttl || 300000)) return entry.data;
+  return null;
+}
+function cacheSet(key, data) { cache[key] = { data: data, time: Date.now() }; }
 
 function apiCall(endpoint, data) {
   return new Promise(function(resolve, reject) {
@@ -45,6 +58,11 @@ async function fetchHotTopics(categoryKey) {
   var cat = CATEGORIES[categoryKey];
   if (!cat) return [];
   
+  // 缓存检查
+  var ck = 'hot_' + categoryKey;
+  var fromCache = cached(ck, null, 180000);
+  if (fromCache) { console.log('  (cache hit)'); return fromCache; }
+  
   var sources = (cat.hotSources || []).join('、');
   var prompt = '你是一个人工智能热点监测系统。请模拟访问以下平台：' + sources + '\n\n' +
     '请列出今天【' + cat.name + '】领域最热门的前10个话题。\n' +
@@ -59,17 +77,22 @@ async function fetchHotTopics(categoryKey) {
   
   var content = resp.choices ? resp.choices[0].message.content : '';
   content = content.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
-  try { return JSON.parse(content); } catch(e) {}
-  var match = content.match(/\[[\s\S]*\]/);
-  if (match) {
-    try { return JSON.parse(match[0]); } catch(e) {}
+  var result = [];
+  try { result = JSON.parse(content); } catch(e) {
+    var match = content.match(/\[[\s\S]*\]/);
+    if (match) { try { result = JSON.parse(match[0]); } catch(e2) {} }
   }
-  return [];
+  cacheSet(ck, result);
+  return result;
 }
 
 // ========== 分类+人设驱动的调研 ==========
 async function researchTopic(topic, categoryKey) {
   var cat = categoryKey ? CATEGORIES[categoryKey] : null;
+  
+  var ck = 'research_' + (categoryKey||'none') + '_' + topic;
+  var fromCache = cached(ck, null, 300000);
+  if (fromCache) { console.log('  (research cache hit)'); return fromCache; }
   
   var prompt;
   if (cat) {
@@ -90,15 +113,15 @@ async function researchTopic(topic, categoryKey) {
   });
   
   var content = resp.choices ? resp.choices[0].message.content : '';
-  // 清理 markdown
   content = content.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
-  // 尝试多种方式解析
-  try { return JSON.parse(content); } catch(e) {}
-  var match = content.match(/\[[\s\S]*\]/);
-  if (match) {
-    try { return JSON.parse(match[0]); } catch(e) {}
+  var result;
+  try { result = JSON.parse(content); } catch(e) {
+    var match = content.match(/\[[\s\S]*\]/);
+    if (match) { try { result = JSON.parse(match[0]); } catch(e2) {} }
   }
-  return { raw: content };
+  if (!result) result = { raw: content };
+  cacheSet(ck, result);
+  return result;
 }
 
 // ========== 平台内容生成（支持人设） ==========
@@ -195,6 +218,35 @@ async function analyzeCopy(copyText, platformKey) {
   }
 }
 
+// ========== Critic 质量评分 ==========
+async function scoreContent(content, platformKey) {
+  var plat = PLATFORMS[platformKey];
+  var platName = plat ? plat.name : '通用';
+  
+  var prompt = '你是内容质量评审专家。请对以下【' + platName + '】平台文案进行评分：\n\n' +
+    '=== 文案 ===\n' + content + '\n\n' +
+    '=== 评分维度（每项0-20分，总分100）===\n' +
+    '1. hookQuality：钩子/开头吸引力\n' +
+    '2. structureQuality：结构逻辑性\n' +
+    '3. platformFit：平台风格匹配度\n' +
+    '4. emotionCurve：情绪节奏\n' +
+    '5. actionability：可执行性/信息价值\n' +
+    '输出JSON：{"total":85,"hookQuality":17,"structureQuality":18,"platformFit":19,"emotionCurve":16,"actionability":15,"suggestions":["改进1","改进2","改进3"]}\n只输出JSON。';
+
+  var resp = await apiCall('/chat/completions', {
+    model: MODEL, temperature: 0.3, max_tokens: 1000,
+    messages: [{ role: 'user', content: prompt }]
+  });
+  
+  var c = resp.choices ? resp.choices[0].message.content : '';
+  c = c.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+  try { return JSON.parse(c); } catch(e) {
+    var m = c.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch(e2) {} }
+  }
+  return { total: 70, suggestions: ['评分解析失败'] };
+}
+
 function serveFile(res, filePath, contentType) {
   try {
     var content = fs.readFileSync(filePath, 'utf8');
@@ -251,6 +303,127 @@ var server = http.createServer(async function(req, res) {
     return;
   }
 
+  // === API: 质量评分 ===
+  if (req.method === 'POST' && pathname === '/api/score') {
+    var chunks = [];
+    req.on('data', function(c) { chunks.push(c); });
+    req.on('end', async function() {
+      try {
+        var body = JSON.parse(Buffer.concat(chunks).toString());
+        if (!body.content) { res.writeHead(400); res.end(JSON.stringify({ error: '请提供内容' })); return; }
+        var score = await scoreContent(body.content, body.platform || 'xiaohongshu');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, score: score }));
+      } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === API: 自定义搜索热点 ===
+  if (req.method === 'POST' && pathname === '/api/hot-custom') {
+    var chunks = [];
+    req.on('data', function(c) { chunks.push(c); });
+    req.on('end', async function() {
+      try {
+        var body = JSON.parse(Buffer.concat(chunks).toString());
+        var keyword = body.keyword, platforms = body.platforms || ['xiaohongshu'];
+        if (!keyword) { res.writeHead(400); res.end(JSON.stringify({ error: '请提供关键词' })); return; }
+        var platNames = platforms.map(function(k){ return PLATFORMS[k] ? PLATFORMS[k].name : k; }).join('、');
+        var prompt = '模拟抓取【'+platNames+'】平台，围绕"'+keyword+'"的热门话题。列出10条，每项含title/score/source/brief。只输出JSON数组。';
+        var resp = await apiCall('/chat/completions', { model: MODEL, temperature: 0.7, max_tokens: 2000, messages: [{ role: 'user', content: prompt }] });
+        var c = resp.choices ? resp.choices[0].message.content : '';
+        c = c.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+        var topics = [];
+        try { topics = JSON.parse(c); } catch(e) { var m = c.match(/\[[\s\S]*\]/); if (m) try { topics = JSON.parse(m[0]); } catch(e2) {} }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, keyword: keyword, topics: topics }));
+      } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === API: 完整链路 — 搜索→拆解→对标→生成 ===
+  if (req.method === 'POST' && pathname === '/api/search-generate') {
+    var chunks = [];
+    req.on('data', function(c) { chunks.push(c); });
+    req.on('end', async function() {
+      try {
+        var body = JSON.parse(Buffer.concat(chunks).toString());
+        var keyword = body.keyword, platforms = body.platforms || ['xiaohongshu'], sType = body.searchType || 'both';
+        if (!keyword) { res.writeHead(400); res.end(JSON.stringify({ error: '请提供关键词' })); return; }
+        
+        var genResults = {};
+        
+        // Step 1: Search for hot topics / viral posts
+        console.log('  Step1: 搜索 + 抓取...');
+        var analyzed = [];
+        
+        if (sType === 'hot' || sType === 'both') {
+          var hr = await apiCall('/chat/completions', {
+            model: MODEL, temperature: 0.7, max_tokens: 2000,
+            messages: [{ role: 'user', content: '为关键词"'+keyword+'"模拟抓取热门话题5条。每项含title/score/source/brief。JSON数组。' }]
+          });
+          var hc = hr.choices ? hr.choices[0].message.content : '';
+          hc = hc.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+          var hotspots = []; try { hotspots = JSON.parse(hc); } catch(e){ var m = hc.match(/\[[\s\S]*\]/); if(m)try{hotspots=JSON.parse(m[0])}catch(e2){} }
+        }
+        
+        // Step 2: Fetch viral posts and deconstruct
+        console.log('  Step2: 抓取爆款 + 拆解...');
+        for (var pi = 0; pi < Math.min(platforms.length, 3); pi++) {
+          var platKey = platforms[pi];
+          var fr = await apiCall('/chat/completions', {
+            model: MODEL, temperature: 0.8, max_tokens: 4000,
+            messages: [{ role: 'user', content: '为"'+(PLATFORMS[platKey]?PLATFORMS[platKey].name:platKey)+'"平台，关键词"'+keyword+'"，生成5条爆款文案。每条含title和body。JSON数组。' }]
+          });
+          var fc = fr.choices ? fr.choices[0].message.content : '';
+          fc = fc.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+          var posts = []; try { posts = JSON.parse(fc); } catch(e){ var fm = fc.match(/\[[\s\S]*\]/); if(fm)try{posts=JSON.parse(fm[0])}catch(e2){} }
+          
+          // Deconstruct each post
+          for (var pj = 0; pj < Math.min(posts.length, 3); pj++) {
+            var ar = await apiCall('/chat/completions', {
+              model: MODEL, temperature: 0.5, max_tokens: 1000,
+              messages: [{ role: 'user', content: '深度拆解这条文案，输出JSON：{hookAnalysis,structure,emotionCurve,reusableTemplate,score}。原文：'+posts[pj].title+'\n'+posts[pj].body }]
+            });
+            var ac = ar.choices ? ar.choices[0].message.content : '';
+            ac = ac.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+            var analysis = {}; try { analysis = JSON.parse(ac); } catch(e){ var am = ac.match(/\{[\s\S]*\}/); if(am)try{analysis=JSON.parse(am[0])}catch(e2){} }
+            analyzed.push({platform: platKey, post: posts[pj], analysis: analysis});
+          }
+        }
+        
+        // Step 3: Generate final copy based on deconstructed patterns
+        console.log('  Step3: 对标生成...');
+        var topTemplates = analyzed.filter(function(a){ return a.analysis && a.analysis.reusableTemplate; }).slice(0, 3);
+        var templateContext = topTemplates.map(function(a, i){
+          return '模板'+(i+1)+'(来自'+(PLATFORMS[a.platform]||{}).name+'): '+a.analysis.reusableTemplate;
+        }).join('\n');
+        
+        for (var gi = 0; gi < Math.min(platforms.length, 3); gi++) {
+          var gk = platforms[gi];
+          var plat = PLATFORMS[gk];
+          if (!plat) continue;
+          
+          var gr = await apiCall('/chat/completions', {
+            model: MODEL, temperature: 0.8, max_tokens: 3000,
+            messages: [{ role: 'user', content: '基于以下成功文案模板，为【'+plat.name+'】平台创作一篇关于"'+keyword+'"的原创文案。\n模板参考：\n'+templateContext+'\n\n输出：第一行标题，空行后正文。要原创，不是改写。' }]
+          });
+          var gc = gr.choices ? gr.choices[0].message.content : '';
+          gc = gc.replace(/^(好的|以下是).*?[\n\r]+/i, '').replace(/\*\*(.+?)\*\*/g, '$1');
+          var lines = gc.split('\n'), title = '', bs = 0;
+          for (var l = 0; l < lines.length; l++) { if (lines[l].trim()) { title = lines[l].trim(); bs = l + 1; break; } }
+          while (bs < lines.length && !lines[bs].trim()) bs++;
+          genResults[gk] = { title: title, body: lines.slice(bs).join('\n').trim() };
+        }
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, keyword: keyword, analyzed: analyzed, generated: genResults }));
+      } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
   // === API: 生成内容（支持分类）===
   if (req.method === 'POST' && pathname === '/api/generate') {
     var chunks = [];
@@ -263,17 +436,29 @@ var server = http.createServer(async function(req, res) {
         if (platforms.length === 0) { res.writeHead(400); res.end(JSON.stringify({ error: '请选择平台' })); return; }
 
         console.log('  研究: ' + topic + (category ? ' (' + category + ')' : ''));
+        
+        // 并行：调研 + 快照先行（返回调研结果先给前端看）
         var research = await researchTopic(topic, category);
         
+        // 并行生成所有平台
         var results = {};
-        for (var i = 0; i < platforms.length; i++) {
-          var pk = platforms[i];
+        await Promise.all(platforms.map(async function(pk) {
           console.log('  生成: ' + (PLATFORMS[pk] ? PLATFORMS[pk].name : pk));
           results[pk] = await generatePlatformContent(topic, pk, research, category);
+        }));
+        
+        // 质量评分（仅评第一个平台，避免API调用过多）
+        var scores = {};
+        if (platforms.length <= 2) {
+          for (var i = 0; i < platforms.length; i++) {
+            var pk = platforms[i];
+            var content = results[pk].title + '\n\n' + results[pk].body;
+            scores[pk] = await scoreContent(content, pk);
+          }
         }
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, topic: topic, research: research, platforms: results }));
+        res.end(JSON.stringify({ success: true, topic: topic, research: research, platforms: results, scores: scores }));
       } catch(e) {
         res.writeHead(500);
         res.end(JSON.stringify({ error: e.message }));

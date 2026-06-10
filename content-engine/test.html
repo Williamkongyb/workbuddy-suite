@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><body>
+<h1>Quick Test</h1>
+<button id="btn1" onclick="test1()">Test Config</button>
+<button id="btn2" onclick="test2()">Test Generate</button>
+<div id="out"></div>
+<script>
+function log(s){document.getElementById('out').innerHTML+='<br>'+s}
+async function test1(){
+  log('Testing config...');
+  try{
+    var r=await fetch('/api/config');
+    var d=await r.json();
+    log('✅ Config OK: '+Object.keys(d.platforms).length+' platforms, '+Object.keys(d.categories).length+' categories');
+  }catch(e){log('❌ Config FAIL: '+e.message)}
+}
+async function test2(){
+  log('Testing generate...');
+  try{
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:'test',platforms:['xiaohongshu']})});
+    var d=await r.json();
+    log(d.success?'✅ Generate OK':'❌ Generate FAIL: '+JSON.stringify(d).substring(0,100));
+  }catch(e){log('❌ Generate FAIL: '+e.message)}
+}
+</script></body></html>

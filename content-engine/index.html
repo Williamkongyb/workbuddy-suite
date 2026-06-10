@@ -3,567 +3,455 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Synapse Content Engine v3 — 灵枢·全网内容矩阵</title>
+<title>Synapse Content Engine v6 — 灵枢</title>
 <style>
-:root {
-  --cyan: #00F0FF; --purple: #8A2BE2; --bg: #0A0A14;
-  --card: #111122; --input: #0D0D1F; --border: #1a1a3a;
-  --text: #e0e0e0; --muted: #64748b; --radius: 12px;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: 'Inter','PingFang SC','Microsoft YaHei',sans-serif;
-  background: var(--bg); color: var(--text); min-height: 100vh;
-}
-.topbar {
-  background: linear-gradient(90deg, rgba(0,240,255,0.03), rgba(138,43,226,0.03));
-  border-bottom: 1px solid var(--border); padding: 10px 28px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.topbar .brand { font-size:15px; font-weight:700;
-  background: linear-gradient(135deg, var(--cyan), var(--purple));
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.topbar .badge { font-size:10px; padding:4px 12px; border-radius:10px;
-  background: rgba(0,240,255,0.08); color: var(--cyan);
-  border:1px solid rgba(0,240,255,0.15); }
-.container { max-width: 1300px; margin:0 auto; padding:20px 28px; }
-
-/* Tabs */
-.tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:2px solid var(--border); }
-.tab { padding:10px 20px; cursor:pointer; font-size:13px; font-weight:600;
-  color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-2px;
-  transition:all 0.2s; }
-.tab:hover { color:var(--text); }
-.tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
-
-/* Panel */
-.panel { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
-.panel h3 { font-size:13px; color:var(--muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; }
-
-/* Category chips */
-.cat-grid { display:flex; gap:8px; flex-wrap:wrap; }
-.cat-chip { padding:10px 18px; border-radius:20px; font-size:13px; cursor:pointer;
-  border:1px solid var(--border); background:var(--input); color:var(--muted);
-  transition:all 0.2s; display:flex; align-items:center; gap:6px; }
-.cat-chip:hover { border-color:rgba(0,240,255,0.3); color:var(--text); }
-.cat-chip.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,240,255,0.05); }
-.cat-chip .persona { font-size:10px; color:var(--muted); }
-
-/* Platform grid */
-.plat-grid { display:flex; gap:8px; flex-wrap:wrap; }
-.plat-chip { padding:8px 16px; border-radius:20px; font-size:13px; cursor:pointer;
-  border:1px solid var(--border); background:var(--input); color:var(--muted);
-  transition:all 0.2s; display:flex; align-items:center; gap:6px; }
-.plat-chip:hover { border-color:rgba(0,240,255,0.3); }
-.plat-chip.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,240,255,0.05); }
-
-/* Hot topics */
-.hot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:8px; max-height:400px; overflow-y:auto; }
-.hot-item { background:var(--input); border:1px solid var(--border); border-radius:8px;
-  padding:10px 14px; cursor:pointer; transition:all 0.2s;
-  display:flex; align-items:flex-start; gap:10px; }
-.hot-item:hover { border-color:var(--cyan); background:rgba(0,240,255,0.03); }
-.hot-item .score { font-size:12px; font-weight:700; color:var(--cyan); min-width:32px; text-align:center; }
-.hot-item .info { flex:1; }
-.hot-item .title { font-size:13px; font-weight:500; line-height:1.4; }
-.hot-item .meta { font-size:11px; color:var(--muted); margin-top:4px; }
-
-/* Input */
-.input-row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
-.input-group { flex:1; min-width:200px; }
-.input-group label { font-size:11px; font-weight:600; color:var(--muted);
-  display:block; margin-bottom:4px; letter-spacing:1px; }
-.input-group input, .input-group textarea { width:100%; background:var(--input);
-  border:1px solid var(--border); border-radius:8px; padding:10px 14px;
-  color:var(--text); font-size:14px; outline:none; font-family:inherit; }
-.input-group input:focus, .input-group textarea:focus { border-color:var(--cyan); }
-.input-group textarea { resize:vertical; min-height:50px; }
-
-.btn { padding:12px 24px; border:none; border-radius:8px; font-size:14px;
-  font-weight:600; cursor:pointer; transition:all 0.2s; font-family:inherit; }
-.btn-primary { background:linear-gradient(135deg, var(--cyan), #0088cc); color:#000; }
-.btn-primary:hover { box-shadow:0 0 20px rgba(0,240,255,0.25); }
-.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
-.btn-outline { background:transparent; border:1px solid var(--purple); color:var(--purple); }
-.btn-outline:hover { background:rgba(138,43,226,0.08); }
-.btn-sm { padding:6px 14px; font-size:12px; }
-
-.status-bar { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:12px; color:var(--muted); }
-.dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
-.dot.active { background:var(--cyan); animation:pulse 1s infinite; }
-.dot.done { background:#00cc66; }
-@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
-
-.results { display:none; }
-.results.show { display:block; }
-
-.research-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
-.research-panel h3 { font-size:13px; color:var(--cyan); margin-bottom:10px; }
-.angle-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; }
-.angle-card { background:var(--input); border:1px solid var(--border); border-radius:8px; padding:12px; }
-.angle-card .num { font-size:10px; font-weight:700; color:var(--cyan); margin-bottom:4px; }
-.angle-card .ang { font-size:13px; font-weight:600; margin-bottom:6px; }
-.angle-card .pt { font-size:11px; color:var(--muted); margin:3px 0; padding-left:10px; border-left:2px solid var(--border); }
-
-.platform-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:12px; }
-.pcard { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-.pcard-header { padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
-.pcard-body { padding:16px; max-height:500px; overflow-y:auto; }
-.pcard-title { font-size:15px; font-weight:700; color:var(--cyan); margin-bottom:10px; }
-.pcard-text { font-size:13px; line-height:1.7; white-space:pre-wrap; color:var(--text); }
-.copy-btn { font-size:11px; padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; }
-.copy-btn:hover { border-color:var(--cyan); color:var(--cyan); }
-
-.loading { display:none; text-align:center; padding:40px 0; }
-.loading.show { display:block; }
-.spinner { width:36px; height:36px; margin:0 auto 12px; border:3px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin 0.8s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg)} }
-
-::-webkit-scrollbar { width:4px; }
-::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-
-@media(max-width:768px){ .platform-cards,.hot-grid { grid-template-columns:1fr; } }
-
-#toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999;
-  padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600;
-  transition:opacity 0.3s; opacity:0; pointer-events:none; }
+:root{--c:#00F0FF;--p:#8A2BE2;--bg:#0A0A14;--card:#111122;--inp:#0D0D1F;--b:#1a1a3a;--t:#e0e0e0;--m:#64748b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+.top{background:linear-gradient(90deg,rgba(0,240,255,.03),rgba(138,43,226,.03));border-bottom:1px solid var(--b);padding:10px 20px;display:flex;justify-content:space-between;align-items:center}
+.top b{background:linear-gradient(135deg,var(--c),var(--p));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:15px}
+.badge{font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(0,240,255,.08);color:var(--c);border:1px solid rgba(0,240,255,.15)}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.box{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:12px}
+.box h3{font-size:12px;color:var(--m);margin-bottom:10px;letter-spacing:1px}
+.r{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.g{flex:1;min-width:160px}
+.g label{font-size:11px;font-weight:600;color:var(--m);display:block;margin-bottom:4px}
+.g input,.g textarea{width:100%;background:var(--inp);border:1px solid var(--b);border-radius:8px;padding:9px 12px;color:var(--t);font-size:13px;outline:none;font-family:inherit}
+.g input:focus,.g textarea:focus{border-color:var(--c)}
+.g textarea{resize:vertical;min-height:50px}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip,.pch{padding:6px 12px;border-radius:16px;font-size:11px;cursor:pointer;border:1px solid var(--b);background:var(--inp);color:var(--m);transition:all .15s;display:flex;align-items:center;gap:4px;user-select:none}
+.chip:hover,.pch:hover{border-color:rgba(0,240,255,.3)}
+.chip.on,.pch.on{border-color:var(--c);color:var(--c);background:rgba(0,240,255,.05)}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn1{background:linear-gradient(135deg,var(--c),#0088cc);color:#000}
+.btn1:hover{box-shadow:0 0 20px rgba(0,240,255,.25)}
+.btn1:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.btn2{background:transparent;border:1px solid var(--p);color:var(--p)}
+.btn2:hover{background:rgba(138,43,226,.08)}
+.btn3{padding:6px 12px;font-size:11px}
+.st{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;color:var(--m)}
+.dt{width:6px;height:6px;border-radius:50%;background:var(--m)}
+.dt.on{background:var(--c);animation:pulse 1s infinite}
+.dt.ok{background:#00cc66}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.ld{display:none;text-align:center;padding:24px}
+.ld.on{display:block}
+.sp{width:30px;height:30px;margin:0 auto 8px;border:3px solid var(--b);border-top-color:var(--c);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.res{display:none}
+.res.on{display:block}
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px}
+.ac{background:var(--inp);border:1px solid var(--b);border-radius:8px;padding:10px}
+.ac .n{font-size:10px;font-weight:700;color:var(--c)}
+.ac .t{font-size:12px;font-weight:600;margin:4px 0}
+.ac .pt{font-size:10px;color:var(--m);margin:2px 0;padding-left:8px;border-left:2px solid var(--b)}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px}
+.pc{background:var(--card);border:1px solid var(--b);border-radius:10px;overflow:hidden}
+.ph{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b);font-size:12px}
+.pb{padding:12px;max-height:420px;overflow-y:auto}
+.pb .tl{font-size:14px;font-weight:700;color:var(--c);margin-bottom:8px}
+.pb .tx{font-size:12px;line-height:1.7;white-space:pre-wrap}
+.cp{font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid var(--b);background:transparent;color:var(--m);cursor:pointer}
+.cp:hover{border-color:var(--c);color:var(--c)}
+.vl>*{margin:8px 0;padding:12px;background:var(--inp);border-left:3px solid var(--c);border-radius:0 8px 8px 0}
+.vl .vt{font-size:13px;font-weight:600;margin-bottom:2px}
+.vl .vd{font-size:10px;color:var(--m);margin:2px 0}
+.vl .vs{font-size:10px;padding:5px 8px;margin-top:4px;background:rgba(0,240,255,.03);border-radius:5px;color:var(--c)}
+.vl .scr{float:right;font-size:11px;font-weight:700}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+@media(max-width:768px){.pg{grid-template-columns:1fr}}
+#dbg{position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:10px;padding:4px 8px;max-height:80px;overflow-y:auto;z-index:9999;font-family:monospace;opacity:0.85}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div><span class="brand">Synapse Content Engine</span></div>
-  <span class="badge">v5.0 · 灵枢全网矩阵</span>
+<div class="top"><b>Synapse Content Engine</b><span class="badge">v6.0</span></div>
+
+<div class="wrap">
+
+<div class="box" style="text-align:center;padding:24px">
+  <div style="font-size:20px;color:var(--c);margin-bottom:4px">灵枢 · 全网内容矩阵</div>
+  <div style="font-size:11px;color:var(--m)">输入主题 → 自动调研 → 一键生成 → 爆款拆解</div>
 </div>
 
-<div class="container">
-
-<div class="tabs" id="tabs">
-  <div class="tab active" data-panel="generate">🎯 内容生成</div>
-  <div class="tab" data-panel="hot">🔥 热点抓取</div>
-  <div class="tab" data-panel="analyze">🔍 爆款拆解</div>
+<div class="box">
+  <h3>📂 内容方向</h3>
+  <div class="chips" id="cats"></div>
 </div>
 
-<!-- ====== 生成面板 ====== -->
-<div id="panel-generate">
-
-  <div class="panel">
-    <h3>📂 选择内容方向（人设驱动）</h3>
-    <div class="cat-grid" id="catGrid"></div>
-  </div>
-
-  <div class="panel">
-    <h3>📝 输入主题</h3>
-    <div class="input-row">
-      <div class="input-group" style="flex:2">
-        <label>内容主题</label>
-        <input type="text" id="topicInput" placeholder="例如：2026年AI行业趋势 / 明朝张居正改革 / 成都城市气质...">
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h3>📱 选择发布平台</h3>
-    <div class="plat-grid" id="platGrid"></div>
-    <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn btn-primary" id="genBtn" onclick="startGenerate()">🚀 生成多平台文案</button>
-      <button class="btn btn-outline btn-sm" onclick="clearResults()">清除结果</button>
-    </div>
-  </div>
-
-  <div class="status-bar">
-    <span class="dot" id="sd"></span>
-    <span id="st">就绪，选择方向和平台后开始</span>
-  </div>
-
-  <div class="loading" id="loading"><div class="spinner"></div><div id="lt">正在生成...</div></div>
-
-  <div class="results" id="results">
-    <div class="research-panel"><h3>🔬 调研结果</h3><div class="angle-grid" id="researchAngles"></div></div>
-    <div class="platform-cards" id="platCards"></div>
-    <div style="text-align:center;padding:20px;display:none" id="exportBar">
-      <button class="btn btn-primary btn-sm" onclick="copyAll()">📋 一键复制</button>
-      <button class="btn btn-outline btn-sm" onclick="downloadMD()">📥 导出MD</button>
-    </div>
-  </div>
-
+<div class="box">
+  <h3>📱 发布平台</h3>
+  <div class="chips" id="plats"></div>
 </div>
 
-<!-- ====== 热点面板 ====== -->
-<div id="panel-hot" style="display:none">
-  <div class="panel">
-    <h3>📂 选择内容方向</h3>
-    <div class="cat-grid" id="hotCatGrid"></div>
-    <div style="margin-top:14px">
-      <button class="btn btn-primary" id="hotBtn" onclick="fetchHot()">🔥 抓取今日热点</button>
+<div class="box">
+  <div class="r">
+    <div class="g" style="flex:3"><label>输入主题</label><input type="text" id="topic" placeholder="例如：AI效率工具推荐 / 明朝历史冷知识..."></div>
+  </div>
+  <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn1" id="btnGen" onclick="doGen()">🚀 一键生成</button>
+    <button class="btn btn2 btn3" onclick="doHot()">🔥 热点</button>
+    <button class="btn btn2 btn3" onclick="doViral()">🔍 爆款</button>
+    <button class="btn btn2 btn3" onclick="toggleSearch()">🔎 自定义搜索</button>
+    <button class="btn btn2 btn3" onclick="clr()">🗑️ 清除</button>
+  </div>
+  
+  <!-- 自定义搜索面板 -->
+  <div id="searchPanel" style="display:none;margin-top:10px;padding:14px;background:rgba(0,240,255,.02);border:1px solid rgba(0,240,255,.15);border-radius:10px">
+    <div style="font-size:12px;color:var(--c);margin-bottom:10px;font-weight:600">🔎 自定义搜索 — AI搜索→拆解→对标→输出文案</div>
+    <div class="r">
+      <div class="g" style="flex:2"><input type="text" id="searchKw" placeholder="输入搜索需求，例如：美妆行业最新爆款文案、科技类最火话题..." style="width:100%"></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:10px;color:var(--m);margin-right:4px">平台:</span>
+      <span class="pch on" data-sk="xiaohongshu" onclick="this.classList.toggle('on')">📕 小红书</span>
+      <span class="pch on" data-sk="gongzhonghao" onclick="this.classList.toggle('on')">💚 公众号</span>
+      <span class="pch on" data-sk="zhihu" onclick="this.classList.toggle('on')">🔵 知乎</span>
+      <span class="pch on" data-sk="douyin" onclick="this.classList.toggle('on')">🎵 抖音</span>
+      <span class="pch on" data-sk="bilibili" onclick="this.classList.toggle('on')">💗 B站</span>
+      <span class="pch on" data-sk="shipinhao" onclick="this.classList.toggle('on')">👁️ 视频号</span>
+      <span class="pch on" data-sk="kuaishou" onclick="this.classList.toggle('on')">🧡 快手</span>
+      <span class="pch" data-sk="tiktok" onclick="this.classList.toggle('on')">🎬 TikTok</span>
+      <span class="pch" data-sk="youtube" onclick="this.classList.toggle('on')">▶️ YouTube</span>
+      <span style="font-size:9px;color:var(--m);margin-left:2px">(海外)</span>
+      <span style="font-size:9px;color:var(--m);cursor:pointer;margin-left:4px" onclick="document.querySelectorAll('#searchPanel .pch').forEach(function(c){c.classList.add('on')})">全选</span>
+      <span style="font-size:9px;color:var(--m)">/</span>
+      <span style="font-size:9px;color:var(--m);cursor:pointer" onclick="document.querySelectorAll('#searchPanel .pch').forEach(function(c){c.classList.remove('on')})">清空</span>
+      <span style="font-size:10px;color:var(--m);margin:0 4px">类型:</span>
+      <button class="btn btn2 btn3" style="border-color:var(--c);color:var(--c)" id="sTypeHot" onclick="setSType('hot')">🔥 热点</button>
+      <button class="btn btn2 btn3" id="sTypeViral" onclick="setSType('viral')">🔍 爆款</button>
+      <button class="btn btn2 btn3" id="sTypeBoth" onclick="setSType('both')">⭐ 都要</button>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px">
+      <button class="btn btn1 btn3" onclick="doCustomSearch()">🔎 仅搜索</button>
+      <button class="btn btn1 btn3" onclick="doFullPipeline()">🚀 搜+对标生成文案</button>
     </div>
   </div>
-  <div class="hot-grid" id="hotGrid"></div>
 </div>
 
-<!-- ====== 拆解面板 ====== -->
-<div id="panel-analyze" style="display:none">
-  <div class="panel">
-    <h3>📝 两种模式</h3>
-    <div style="display:flex;gap:12px;margin-bottom:16px">
-      <button class="btn btn-primary" onclick="autoFetchViral()">🚀 一键抓取爆款（自动搜+自动拆）</button>
-      <span style="font-size:12px;color:var(--muted);align-self:center">或手动粘贴下方</span>
-    </div>
-    <div class="loading" id="viralLoading"><div class="spinner"></div><div id="viralStatus">正在抓取平台爆款...</div></div>
-    <div class="input-row">
-      <div class="input-group" style="flex:1">
-        <label>选择平台</label>
-        <div class="plat-grid" id="analyzePlatGrid"></div>
-      </div>
-    </div>
-    <div class="input-group" style="margin-top:12px">
-      <textarea id="copyText" rows="8" placeholder="在此粘贴对标账号的爆款文案..." style="width:100%"></textarea>
-    </div>
-    <button class="btn btn-primary" id="analyzeBtn" onclick="startAnalyze()" style="margin-top:12px">🔍 拆解分析</button>
-    <div class="loading" id="analyzeLoading"><div class="spinner"></div><div>正在深度拆解...</div></div>
-  </div>
-  <div id="analyzeResult" style="display:none"></div>
+<div class="st"><span class="dt" id="sd"></span><span id="st">就绪</span><span style="margin-left:auto;font-size:10px" id="svrStatus">🔄</span></div>
+
+<!-- 服务器离线横幅 -->
+<div id="offlineBanner" style="display:none;text-align:center;padding:12px;margin:8px 0;background:rgba(226,75,74,.1);border:1px solid #E24B4A;border-radius:8px;font-size:12px;color:#E24B4A;font-weight:600">
+  ⚠️ 服务器未连接 — 点击<a href="javascript:location.reload()" style="color:#fff;text-decoration:underline">刷新页面</a>或在终端运行 <code style="background:rgba(226,75,74,.2);padding:2px 6px;border-radius:4px">node server.js</code>
+</div>
+
+<div class="ld" id="ld"><div class="sp"></div><div id="lt" style="font-size:11px;color:var(--m)">处理中...</div></div>
+
+<div class="res" id="res">
+  <div class="box" id="rbox" style="display:none"><h3>🔬 调研</h3><div class="ag" id="rag"></div></div>
+  <div class="box" id="vbox" style="display:none"><h3>📊 爆款拆解</h3><div class="vl" id="vl"></div></div>
+  <div class="pg" id="pg"></div>
 </div>
 
 </div>
-
 <div id="toast"></div>
+<div id="dbg"></div>
 
 <script>
-var CATS = {}, PLATS = {}, activeCat = null, isGenerating = false;
+var CATS={},PLATS={},actCat=null,busy=false;
 
-function toast(msg, type) {
-  var t = document.getElementById('toast');
-  var c = {error:'#E24B4A',success:'#00cc66',warn:'#EF9F27'};
-  t.style.background = c[type] || '#333'; t.style.color = '#fff';
-  t.style.opacity = '1'; t.textContent = msg;
-  clearTimeout(t._t); t._t = setTimeout(function(){t.style.opacity='0'},3000);
+function dbg(s){var d=document.getElementById('dbg');d.textContent=(d.textContent||'')+'\n'+s;d.scrollTop=d.scrollHeight}
+
+function toast(m,ty){var e=document.getElementById('toast');e.style.background={error:'#E24B4A',ok:'#00cc66',warn:'#EF9F27'}[ty]||'#333';e.style.color='#fff';e.style.opacity='1';e.textContent=m;clearTimeout(e._t);e._t=setTimeout(function(){e.style.opacity='0'},2500)}
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function setBusy(y,m){busy=y;document.getElementById('btnGen').disabled=y;document.getElementById('ld').className=y?'ld on':'ld';if(m)document.getElementById('lt').textContent=m;document.getElementById('sd').className=y?'dt on':'dt'}
+
+function getPlats(){var a=[];document.querySelectorAll('#plats .pch.on').forEach(function(c){a.push(c.dataset.k)});return a}
+
+// 初始化 - 独立于网络
+function initFallback(){
+  // 硬编码基础数据作为fallback
+  CATS = {
+    hot_news:{name:'社会热点',icon:'🔥',persona:'全网情报官'},
+    ming_history:{name:'明朝历史',icon:'🏯',persona:'大明穿越者'},
+    urban_geo:{name:'城市人文',icon:'🏙️',persona:'城市灵魂捕手'},
+    tech_frontier:{name:'科技前沿',icon:'🚀',persona:'科技观察员'},
+    ai_special:{name:'AI专版',icon:'🤖',persona:'AI情报局长'}
+  };
+  PLATS = {
+    xiaohongshu:{name:'小红书',icon:'📕'},gongzhonghao:{name:'公众号',icon:'💚'},
+    zhihu:{name:'知乎',icon:'🔵'},douyin:{name:'抖音',icon:'🎵'},
+    bilibili:{name:'B站',icon:'💗'},shipinhao:{name:'视频号',icon:'👁️'},
+    kuaishou:{name:'快手',icon:'🧡'}
+  };
+  renderChips();
+  toast('已就绪('+Object.keys(PLATS).length+'平台)','ok');
 }
 
-async function init() {
-  var r = await fetch('/api/config'); var d = await r.json();
-  CATS = d.categories; PLATS = d.platforms;
-  
-  // 分类Chips
-  var cg = document.getElementById('catGrid');
-  Object.keys(CATS).forEach(function(k) {
-    var chip = document.createElement('div');
-    chip.className = 'cat-chip'; chip.dataset.key = k;
-    chip.innerHTML = CATS[k].icon + ' ' + CATS[k].name + ' <span class="persona">(' + CATS[k].persona + ')</span>';
-    chip.onclick = function() { selectCat(k); };
-    cg.appendChild(chip);
+function renderChips(){
+  var cg=document.getElementById('cats'),pg=document.getElementById('plats');
+  cg.innerHTML='';pg.innerHTML='';
+  Object.keys(CATS).forEach(function(k){
+    var d=document.createElement('div');d.className='chip';d.dataset.k=k;
+    d.innerHTML=CATS[k].icon+' '+CATS[k].name;
+    d.onclick=function(){actCat=k;document.querySelectorAll('#cats .chip').forEach(function(c){c.classList.remove('on')});d.classList.add('on')};
+    cg.appendChild(d);
   });
-  
-  // 热点分类Chips
-  var hcg = document.getElementById('hotCatGrid');
-  Object.keys(CATS).forEach(function(k) {
-    var chip = document.createElement('div');
-    chip.className = 'cat-chip'; chip.dataset.key = k;
-    chip.innerHTML = CATS[k].icon + ' ' + CATS[k].name;
-    chip.onclick = function() {
-      document.querySelectorAll('#hotCatGrid .cat-chip').forEach(function(c){c.classList.remove('active')});
-      chip.classList.add('active'); activeCat = k;
-    };
-    hcg.appendChild(chip);
-  });
-  if (Object.keys(CATS).length > 0) { hcg.querySelector('.cat-chip').click(); }
-  
-  // 平台Chips
-  var pg = document.getElementById('platGrid');
-  Object.keys(PLATS).forEach(function(k) {
-    var chip = document.createElement('div');
-    chip.className = 'plat-chip active'; chip.dataset.key = k;
-    chip.innerHTML = PLATS[k].icon + ' ' + PLATS[k].name;
-    chip.onclick = function() { chip.classList.toggle('active'); };
-    pg.appendChild(chip);
-  });
-  
-  // Tabs
-  document.getElementById('tabs').addEventListener('click', function(e) {
-    var tab = e.target.closest('.tab'); if (!tab) return;
-    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
-    tab.classList.add('active');
-    document.getElementById('panel-generate').style.display = tab.dataset.panel === 'generate' ? 'block' : 'none';
-    document.getElementById('panel-hot').style.display = tab.dataset.panel === 'hot' ? 'block' : 'none';
-    document.getElementById('panel-analyze').style.display = tab.dataset.panel === 'analyze' ? 'block' : 'none';
-  });
-}
-init();
-initAnalyzePlats();
-
-function selectCat(key) {
-  activeCat = key;
-  document.querySelectorAll('#catGrid .cat-chip').forEach(function(c){c.classList.remove('active')});
-  document.querySelector('#catGrid [data-key="' + key + '"]').classList.add('active');
-}
-
-// 拆解面板平台选择
-function initAnalyzePlats() {
-  var ag = document.getElementById('analyzePlatGrid');
-  var activePlat = null;
   Object.keys(PLATS).forEach(function(k){
-    var chip = document.createElement('div');
-    chip.className = 'plat-chip'; chip.dataset.key = k;
-    chip.innerHTML = PLATS[k].icon + ' ' + PLATS[k].name;
-    chip.onclick = function(){
-      document.querySelectorAll('#analyzePlatGrid .plat-chip').forEach(function(c){c.classList.remove('active')});
-      chip.classList.add('active'); activePlat = k;
-    };
-    ag.appendChild(chip);
+    var d=document.createElement('div');d.className='pch on';d.dataset.k=k;
+    d.innerHTML=PLATS[k].icon+' '+PLATS[k].name;
+    d.onclick=function(){d.classList.toggle('on')};
+    pg.appendChild(d);
   });
-  ag.querySelector('.plat-chip').click();
 }
 
-// 一键抓取全平台爆款
-async function autoFetchViral() {
-  var activePlat = document.querySelector('#analyzePlatGrid .plat-chip.active');
-  var platform = activePlat ? activePlat.dataset.key : 'xiaohongshu';
-  
-  var btn = document.querySelector('button[onclick="autoFetchViral()"]');
-  btn.disabled = true; btn.textContent = '⏳ 正在抓取+拆解中...';
-  var loading = document.getElementById('viralLoading');
-  loading.classList.add('show');
-  var resultDiv = document.getElementById('analyzeResult');
-  resultDiv.style.display = 'none';
-  
-  try {
-    document.getElementById('viralStatus').textContent = '🔍 Step 1/2: AI模拟抓取' + (PLATS[platform]||{}).name + ' Top 10 爆款...';
-    var resp = await fetch('/api/fetch-viral', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({platform:platform, category:activeCat}) });
-    var data = await resp.json();
-    
-    if (!data.success) { toast(data.error,'error'); return; }
-    
-    document.getElementById('viralStatus').textContent = '✅ 抓到' + data.posts.length + '条爆款，正在逐个深度拆解...';
-    
-    // 逐个拆解
-    var analyzed = [];
-    for (var i = 0; i < data.posts.length; i++) {
-      document.getElementById('viralStatus').textContent = '🔬 拆解中 (' + (i+1) + '/' + data.posts.length + '): ' + (data.posts[i].title||'').substring(0,30) + '...';
-      var ar = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:data.posts[i].title+'\n\n'+data.posts[i].body, platform:platform}) });
-      var ad = await ar.json();
-      if (ad.success) analyzed.push({ post: data.posts[i], analysis: ad.analysis });
-    }
-    
-    renderViralResults(analyzed, platform);
-    toast('完成！拆解了' + analyzed.length + '条爆款', 'success');
-  } catch(e) { toast('错误: '+e.message,'error'); }
-  finally { btn.disabled = false; btn.textContent = '🚀 一键抓取爆款（自动搜+自动拆）'; loading.classList.remove('show'); }
+// 尝试从服务器获取完整配置
+async function initRemote(){
+  try{
+    var r=await fetch('/api/config');var d=await r.json();
+    if(d.platforms&&d.categories){CATS=d.categories;PLATS=d.platforms;renderChips();toast('在线 · '+Object.keys(PLATS).length+'平台','ok')}
+  }catch(e){dbg('initRemote failed: '+e.message)}
 }
 
-function renderViralResults(items, platform) {
-  var r = document.getElementById('analyzeResult');
-  r.style.display = 'block';
-  
-  var html = '<div class="panel"><h3>📊 ' + (PLATS[platform]||{}).name + ' Top爆款拆解报告</h3>';
-  
-  items.forEach(function(item, i){
-    var a = item.analysis, p = item.post;
-    var score = a.score ? parseInt(a.score) : 0;
-    var scoreColor = score >= 80 ? '#00cc66' : score >= 60 ? '#EF9F27' : '#E24B4A';
-    
-    html += '<div style="margin:16px 0;padding:16px;background:var(--input);border-left:3px solid var(--cyan);border-radius:0 8px 8px 0">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html += '<b style="font-size:14px;color:var(--text)">#' + (i+1) + ' ' + esc(p.title||'').substring(0,60) + '</b>';
-    html += '<span style="font-size:12px;font-weight:700;color:' + scoreColor + '">⭐ ' + (score||'?') + '/100</span>';
-    html += '</div>';
-    
-    // 互动数据
-    if (p.engagement) {
-      var e = p.engagement;
-      html += '<div style="font-size:11px;color:var(--muted);margin:4px 0">';
-      html += '❤️ ' + (e.likes||0).toLocaleString() + ' · ⭐ ' + (e['收藏']||e.saves||0).toLocaleString() + ' · 💬 ' + (e['评论']||e.comments||0).toLocaleString() + ' · 🔄 ' + (e['转发']||e.shares||0).toLocaleString();
-      html += ' · by @' + esc(p.author||'') + '</div>';
-    }
-    
-    if (a.hookAnalysis) html += '<div style="font-size:12px;color:var(--muted);margin:4px 0"><b>🎣 钩子：</b>'+esc(a.hookAnalysis)+'</div>';
-    if (a.structure) html += '<div style="font-size:12px;color:var(--muted);margin:4px 0"><b>📐 结构：</b>'+esc(a.structure)+'</div>';
-    if (a.reusableTemplate) html += '<div style="font-size:11px;margin:8px 0;padding:8px;background:rgba(0,240,255,0.04);border-radius:6px"><b style="color:var(--cyan)">📋 模板：</b>'+esc(a.reusableTemplate)+'</div>';
-    
-    html += '</div>';
-  });
-  
-  html += '</div>';
-  r.innerHTML = html;
-}
-
-async function startAnalyze() {
-  var text = document.getElementById('copyText').value.trim();
-  if (!text) { toast('请粘贴文案内容','warn'); return; }
-  var activePlat = document.querySelector('#analyzePlatGrid .plat-chip.active');
-  var platform = activePlat ? activePlat.dataset.key : 'xiaohongshu';
-  
-  var btn = document.getElementById('analyzeBtn'); btn.disabled = true; btn.textContent = '⏳ 拆解中...';
-  document.getElementById('analyzeLoading').classList.add('show');
-  document.getElementById('analyzeResult').style.display = 'none';
-  
-  try {
-    var resp = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:text, platform:platform}) });
-    var data = await resp.json();
-    if (!data.success) { toast(data.error,'error'); return; }
-    renderAnalysis(data.analysis);
-    toast('拆解完成','success');
-  } catch(e) { toast('错误: '+e.message,'error'); }
-  finally { btn.disabled = false; btn.textContent = '🔍 拆解分析'; document.getElementById('analyzeLoading').classList.remove('show'); }
-}
-
-function renderAnalysis(a) {
-  var r = document.getElementById('analyzeResult');
-  r.style.display = 'block';
-  var html = '<div class="panel"><h3>📊 拆解结果</h3>';
-  
-  if (a.hookAnalysis) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">🎣 钩子分析：</b>'+esc(a.hookAnalysis)+'</div>';
-  if (a.structure) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">📐 内容结构：</b>'+esc(a.structure)+'</div>';
-  
-  if (a.emotionCurve) {
-    html += '<div style="margin:8px 0"><b style="color:var(--cyan)">📈 情绪曲线：</b>';
-    if (typeof a.emotionCurve === 'object') {
-      Object.keys(a.emotionCurve).forEach(function(k){ html += '<span style="margin:2px 6px;padding:2px 10px;border-radius:10px;font-size:11px;background:rgba(138,43,226,0.1);color:var(--purple)">'+k+': '+a.emotionCurve[k]+'</span>'; });
-    }
-    html += '</div>';
+// 健康检查轮询
+var serverOnline=true;
+setInterval(async function(){
+  try{var r=await fetch('/api/health');var d=await r.json();
+    document.getElementById('svrStatus').textContent='🟢 在线';
+    if(!serverOnline){serverOnline=true;document.getElementById('offlineBanner').style.display='none';toast('服务器已恢复','ok')}
+  }catch(e){
+    serverOnline=false;
+    document.getElementById('svrStatus').textContent='🔴 离线';
+    document.getElementById('offlineBanner').style.display='block';
   }
+},10000);
+
+// 初始化
+initFallback();
+initRemote();
+
+// 按钮函数
+async function doGen(){
+  if(busy)return;
+  var topic=document.getElementById('topic').value.trim();
+  if(!topic){toast('请输入主题','warn');return}
+  var plats=getPlats();
+  if(!plats.length){toast('请选择平台','warn');return}
   
-  if (a.keywords && a.keywords.length) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">🏷️ 关键词：</b>'+a.keywords.map(function(k){return '<span style="margin:2px 4px;padding:2px 8px;border-radius:8px;font-size:11px;background:rgba(0,240,255,0.08);color:var(--cyan)">'+esc(k)+'</span>';}).join('')+'</div>';
+  busy=true;setBusy(true,'🔬 调研中...');document.getElementById('res').className='res';
+  document.getElementById('st').textContent='正在调研...';
   
-  if (a.reusableTemplate) {
-    html += '<div style="margin:12px 0;padding:14px;background:rgba(0,240,255,0.03);border:1px dashed var(--border);border-radius:8px">';
-    html += '<b style="color:var(--cyan)">📋 可复用模板：</b><pre style="margin-top:8px;font-size:12px;line-height:1.8;color:var(--text);white-space:pre-wrap">'+esc(a.reusableTemplate)+'</pre></div>';
-  }
-  
-  if (a.score) html += '<div style="margin:8px 0"><b style="color:var(--cyan)">⭐ 评分：</b>'+esc(a.score)+'</div>';
-  
-  html += '</div>';
-  r.innerHTML = html;
+  try{
+    dbg('POST /api/generate topic='+topic+' plats='+plats.join(','));
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,category:actCat})});
+    var d=await r.json();
+    dbg('Response success='+d.success);
+    if(!d.success){toast(d.error||'失败','error');setBusy(false);return}
+    
+    // 快照预览：先展示调研结果
+    showResearch(d.research);
+    document.getElementById('res').className='res on';
+    document.getElementById('st').textContent='✅ 调研完成，正在生成文案...';
+    
+    setBusy(true,'✨ 生成文案中...');
+    showResearch(d.research);
+    showPlatforms(d.platforms, d.scores);
+    document.getElementById('res').className='res on';
+    document.getElementById('sd').className='dt ok';
+    document.getElementById('st').textContent='✅ 完成 · '+plats.length+'平台';
+    toast('已生成','ok');
+  }catch(e){dbg('Error: '+e.message);toast('错误: '+e.message,'error')}
+  setBusy(false);
 }
 
-function getPlats() {
-  return Array.from(document.querySelectorAll('#platGrid .plat-chip.active')).map(function(c){return c.dataset.key});
+async function doHot(){
+  if(busy)return;
+  var cat=actCat||'ai_special';
+  setBusy(true,'🔥 抓取热点...');document.getElementById('res').className='res';
+  try{
+    dbg('POST /api/hot cat='+cat);
+    var r=await fetch('/api/hot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:cat})});
+    var d=await r.json();
+    dbg('Hot response count='+(d.topics||[]).length);
+    if(!d.success){toast(d.error||'失败','error');setBusy(false);return}
+    
+    document.getElementById('rbox').style.display='block';
+    document.getElementById('vbox').style.display='none';
+    document.getElementById('rag').innerHTML='<div class="ac" style="grid-column:1/-1;font-size:12px;color:var(--c)">🔥 '+(CATS[cat]||{}).name+' · '+d.topics.length+'条热点 (点击生成)</div>'+
+      d.topics.map(function(tp,i){return '<div class="ac" style="cursor:pointer" onclick="document.getElementById(\'topic\').value=\''+(tp.title||'').replace(/'/g,'\\\'')+'\';doGen()"><div class="n">#'+(i+1)+' · '+tp.score+'热度</div><div class="t">'+esc(tp.title)+'</div><div class="pt">'+esc(tp.source||'')+' · '+esc(tp.brief||'')+'</div></div>'}).join('');
+    
+    document.getElementById('res').className='res on';
+    document.getElementById('sd').className='dt ok';document.getElementById('st').textContent='✅ '+d.topics.length+'条热点';
+    toast('可点击热点直接生成','ok');
+  }catch(e){dbg('Hot error: '+e.message);toast('错误','error')}
+  setBusy(false);
 }
 
-async function startGenerate() {
-  if (isGenerating) return;
-  var topic = document.getElementById('topicInput').value.trim();
-  if (!topic) { toast('请输入主题','warn'); return; }
-  var plats = getPlats();
-  if (plats.length === 0) { toast('请选择平台','warn'); return; }
-  
-  isGenerating = true;
-  var btn = document.getElementById('genBtn'); btn.disabled = true; btn.textContent = '⏳ 生成中...';
-  document.getElementById('results').classList.remove('show');
-  document.getElementById('exportBar').style.display = 'none';
-  document.getElementById('loading').classList.add('show');
-  document.getElementById('sd').className = 'dot active';
-  document.getElementById('st').textContent = '正在全网调研...';
-  
-  try {
-    var resp = await fetch('/api/generate', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:topic, platforms:plats, category:activeCat})
+async function doViral(){
+  if(busy)return;
+  var plats=getPlats();if(!plats.length){toast('请选平台','warn');return}
+  var plat=plats[0];
+  setBusy(true,'🔍 抓取爆款...');document.getElementById('res').className='res';
+  try{
+    dbg('POST /api/fetch-viral plat='+plat);
+    var fr=await fetch('/api/fetch-viral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:plat,category:actCat})});
+    var fd=await fr.json();
+    dbg('Viral posts='+(fd.posts||[]).length);
+    if(!fd.success||!fd.posts.length){toast('未抓到','error');setBusy(false);return}
+    
+    var analyzed=[];
+    for(var i=0;i<fd.posts.length;i++){
+      document.getElementById('lt').textContent='拆解 '+(i+1)+'/'+fd.posts.length+'...';
+      var ar=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:fd.posts[i].title+'\n\n'+fd.posts[i].body,platform:plat})});
+      var ad=await ar.json();
+      if(ad.success)analyzed.push({post:fd.posts[i],analysis:ad.analysis});
+    }
+    
+    document.getElementById('rbox').style.display='none';
+    document.getElementById('vbox').style.display='block';
+    var vh='<div style="font-size:11px;color:var(--m);margin-bottom:8px">'+(PLATS[plat]||{}).name+' Top'+analyzed.length+'爆款 · 深度拆解</div>';
+    analyzed.forEach(function(item,idx){
+      var a=item.analysis,p=item.post,sc=parseInt(a.score)||0,scC=sc>=80?'#00cc66':sc>=60?'#EF9F27':'#E24B4A';
+      vh+='<div><span class="scr" style="color:'+scC+'">⭐'+sc+'</span>';
+      vh+='<div class="vt">#'+(idx+1)+' '+esc((p.title||'').substring(0,60))+'</div>';
+      if(p.engagement){var e=p.engagement;vh+='<div class="vd">❤️'+(e.likes||0).toLocaleString()+' · ⭐'+(e['收藏']||e.saves||0).toLocaleString()+' · 💬'+(e['评论']||e.comments||0).toLocaleString()+' · @'+esc(p.author||'')+'</div>'}
+      if(a.hookAnalysis)vh+='<div class="vd">🎣 '+esc(a.hookAnalysis)+'</div>';
+      if(a.structure)vh+='<div class="vd">📐 '+esc(a.structure)+'</div>';
+      if(a.reusableTemplate)vh+='<div class="vs">📋 '+esc(a.reusableTemplate)+'</div>';
+      vh+='</div>';
     });
-    var data = await resp.json();
-    if (!data.success) { toast(data.error,'error'); return; }
+    document.getElementById('vl').innerHTML=vh;
+    document.getElementById('res').className='res on';
+    document.getElementById('sd').className='dt ok';document.getElementById('st').textContent='✅ 拆解'+analyzed.length+'条';
+    toast('完成','ok');
+  }catch(e){dbg('Viral error: '+e.message);toast('错误','error')}
+  setBusy(false);
+}
+
+function showResearch(d){
+  var rp=document.getElementById('rbox'),ra=document.getElementById('rag');
+  if(!d||!Array.isArray(d)){rp.style.display='none';return}
+  rp.style.display='block';
+  ra.innerHTML=d.map(function(r,i){return '<div class="ac"><div class="n">角度'+(i+1)+'</div><div class="t">'+esc(r.angle||'')+'</div>'+(r.keyPoints||[]).map(function(p){return'<div class="pt">'+esc(p)+'</div>'}).join('')+'</div>'}).join('');
+}
+
+function showPlatforms(d,sc){
+  document.getElementById('pg').innerHTML=Object.keys(d||{}).map(function(k){
+    var p=d[k],pl=PLATS[k]||{},s=sc&&sc[k]?sc[k]:null;
+    var scoreHtml='';
+    if(s){
+      var scC=s.total>=80?'#00cc66':s.total>=60?'#EF9F27':'#E24B4A';
+      scoreHtml='<span style="font-size:10px;font-weight:700;color:'+scC+'">⭐'+s.total+'/100</span> ' +
+        '<span style="font-size:9px;color:var(--m)">🎣'+s.hookQuality+' 📐'+s.structureQuality+' 🎯'+s.platformFit+' 💓'+s.emotionCurve+' 💡'+s.actionability+'</span>';
+    }
+    return'<div class="pc"><div class="ph"><span>'+pl.icon+' <b>'+pl.name+'</b> <span style="font-size:10px;color:var(--m)">'+(p.body||'').length+'字</span></span><span>'+scoreHtml+'</span><button class="cp" onclick="copyOne(\''+k+'\')">📋复制</button></div><div class="pb" id="b-'+k+'"><div class="tl">'+esc(p.title||'')+'</div><div class="tx">'+esc(p.body||'')+'</div>'+(s&&s.suggestions?'<div style="margin-top:10px;padding:8px;background:rgba(239,159,39,.05);border-radius:6px;font-size:10px;color:var(--m)">💡 '+s.suggestions.map(function(sg){return esc(sg)}).join(' | ')+'</div>':'')+'</div></div>';
+  }).join('');
+}
+
+async function copyOne(k){
+  var el=document.getElementById('b-'+k),t=el.querySelector('.tl').textContent+'\n\n'+el.querySelector('.tx').textContent;
+  try{await navigator.clipboard.writeText(t);toast('已复制','ok')}catch(e){toast('复制失败','error')}
+}
+
+function clr(){document.getElementById('res').className='res';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('sd').className='dt';document.getElementById('st').textContent='就绪'}
+
+// 完整链路：搜索→拆解→对标→生成
+async function doFullPipeline(){
+  var kw=document.getElementById('searchKw').value.trim();
+  if(!kw){toast('请输入搜索需求','warn');return}
+  var plats=[];document.querySelectorAll('#searchPanel .pch.on').forEach(function(c){plats.push(c.dataset.sk)});
+  if(!plats.length){toast('请选平台','warn');return}
+  
+  setBusy(true,'🚀 搜索+拆解+对标生成...');document.getElementById('res').className='res';
+  document.getElementById('st').textContent='Step 1/3: 搜索...';
+  
+  try{
+    document.getElementById('lt').textContent='Step 1/3: AI搜索热点+爆款...';
+    var r=await fetch('/api/search-generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keyword:kw,platforms:plats,searchType:sType})});
+    var d=await r.json();
+    if(!d.success){toast(d.error,'error');setBusy(false);return}
     
-    // 渲染
-    renderResearch(data.research);
-    renderPlatforms(data.platforms);
-    document.getElementById('results').classList.add('show');
-    document.getElementById('exportBar').style.display = 'block';
+    document.getElementById('lt').textContent='Step 3/3: 渲染结果...';
     
-    document.getElementById('sd').className = 'dot done';
-    document.getElementById('st').textContent = '✅ 生成完成！覆盖 ' + plats.length + ' 个平台';
-    toast('已生成 ' + plats.length + ' 个平台内容', 'success');
-  } catch(e) {
-    document.getElementById('sd').className = 'dot';
-    toast('错误: ' + e.message, 'error');
-  } finally {
-    isGenerating = false; btn.disabled = false; btn.textContent = '🚀 生成多平台文案';
-    document.getElementById('loading').classList.remove('show');
-  }
+    // Show deconstructed competitors
+    if(d.analyzed&&d.analyzed.length){
+      document.getElementById('vbox').style.display='block';
+      var vh='<div style="font-size:11px;color:var(--m);margin-bottom:8px">🔬 竞品拆解 ('+d.analyzed.length+'条) & 对标生成</div>';
+      d.analyzed.forEach(function(item,idx){
+        var a=item.analysis,p=item.post,pl=PLATS[item.platform]||{},sc=parseInt(a.score)||0,scC=sc>=80?'#00cc66':sc>=60?'#EF9F27':'#E24B4A';
+        vh+='<div><span class="scr" style="color:'+scC+'">⭐'+sc+'</span>';
+        vh+='<div class="vt">#'+(idx+1)+' ['+pl.name+'] '+esc((p.title||'').substring(0,50))+'</div>';
+        if(a.hookAnalysis)vh+='<div class="vd">🎣 '+esc(a.hookAnalysis)+'</div>';
+        if(a.reusableTemplate)vh+='<div class="vs">📋 模板: '+esc(a.reusableTemplate)+'</div>';
+        vh+='</div>';
+      });
+      document.getElementById('vl').innerHTML=vh;
+    }
+    
+    // Show generated final copy
+    if(d.generated&&Object.keys(d.generated).length){
+      document.getElementById('rbox').style.display='block';
+      document.getElementById('rag').innerHTML='<div class="ac" style="grid-column:1/-1;font-size:12px;color:var(--c)">📝 对标生成的最终文案（基于竞品拆解）</div>';
+      showPlatforms(d.generated);
+    }
+    
+    document.getElementById('res').className='res on';
+    document.getElementById('sd').className='dt ok';document.getElementById('st').textContent='✅ 完成 · '+Object.keys(d.generated||{}).length+'篇文案';
+    toast('搜索+拆解+生成完成','ok');
+  }catch(e){dbg('Pipeline error: '+e.message);toast('错误','error')}
+  setBusy(false);
 }
 
-async function fetchHot() {
-  var btn = document.getElementById('hotBtn'); btn.disabled = true; btn.textContent = '⏳ 抓取中...';
-  try {
-    var resp = await fetch('/api/hot', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({category:activeCat || 'hot_news'})
-    });
-    var data = await resp.json();
-    renderHot(data.topics);
-    toast('抓取到 ' + (data.topics||[]).length + ' 条热点', 'success');
-  } catch(e) { toast('抓取失败','error'); }
-  finally { btn.disabled = false; btn.textContent = '🔥 抓取今日热点'; }
-}
+// 自定义搜索
+var sType='hot';
+function toggleSearch(){var p=document.getElementById('searchPanel');p.style.display=p.style.display==='none'?'block':'none'}
+function setSType(t){sType=t;['sTypeHot','sTypeViral','sTypeBoth'].forEach(function(id){var b=document.getElementById(id);b.style.borderColor=t===id.replace('sType','').toLowerCase()?'var(--c)':'';b.style.color=t===id.replace('sType','').toLowerCase()?'var(--c)':'var(--p)'})}
 
-function renderHot(topics) {
-  var hg = document.getElementById('hotGrid');
-  hg.innerHTML = (topics||[]).map(function(t,i){
-    return '<div class="hot-item" onclick="document.getElementById(\'topicInput\').value=\'' + (t.title||'').replace(/'/g,"\\'") + '\';document.querySelector(\'.tab[data-panel=generate]\').click()">' +
-      '<div class="score">' + (t.score||'') + '</div>' +
-      '<div class="info"><div class="title">' + esc(t.title) + '</div>' +
-      '<div class="meta">' + esc(t.source||'') + ' · ' + esc(t.brief||'') + '</div></div></div>';
-  }).join('');
-}
-
-function renderResearch(data) {
-  if (!data || !Array.isArray(data)) {
-    document.getElementById('researchAngles').innerHTML = '<div style="color:var(--muted);font-size:12px;">调研数据解析中...</div>';
-    return;
-  }
-  document.getElementById('researchAngles').innerHTML = data.map(function(r,i){
-    return '<div class="angle-card"><div class="num">角度 ' + (i+1) + '</div>' +
-      '<div class="ang">' + esc(r.angle||'') + '</div>' +
-      (r.keyPoints||[]).map(function(p){return '<div class="pt">' + esc(p) + '</div>';}).join('') +
-    '</div>';
-  }).join('');
-}
-
-function renderPlatforms(data) {
-  document.getElementById('platCards').innerHTML = Object.keys(data).map(function(k){
-    var p = data[k], plat = PLATS[k] || {};
-    return '<div class="pcard"><div class="pcard-header"><div>' +
-      (plat.icon||'') + ' <b>' + (plat.name||k) + '</b> <span style="font-size:10px;color:var(--muted)">' + ((p.body||'').length) + '字</span></div>' +
-      '<button class="copy-btn" onclick="copyCard(\''+k+'\')">📋 复制</button></div>' +
-      '<div class="pcard-body" id="body-'+k+'"><div class="pcard-title">' + esc(p.title||'') + '</div>' +
-      '<div class="pcard-text">' + esc(p.body||p.full||'') + '</div></div></div>';
-  }).join('');
-}
-
-function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-async function copyCard(k) {
-  var el = document.getElementById('body-'+k);
-  var t = el.querySelector('.pcard-title').textContent + '\n\n' + el.querySelector('.pcard-text').textContent;
-  try { await navigator.clipboard.writeText(t); toast('已复制','success'); } catch(e) { toast('复制失败','error'); }
-}
-
-function copyAll() {
-  var all = '# Synapse Content Engine v3.0\n\n';
-  document.querySelectorAll('.pcard').forEach(function(c){
-    all += '## ' + c.querySelector('b').textContent + '\n\n';
-    all += '### ' + c.querySelector('.pcard-title').textContent + '\n\n';
-    all += c.querySelector('.pcard-text').textContent + '\n\n---\n\n';
-  });
-  navigator.clipboard.writeText(all).then(function(){toast('全部已复制','success')});
-}
-
-function downloadMD() {
-  var all = '# Synapse Content Engine v3.0 生成内容\n> ' + new Date().toLocaleString('zh-CN') + '\n\n';
-  document.querySelectorAll('.pcard').forEach(function(c){
-    all += '## ' + c.querySelector('b').textContent + '\n\n### ' + c.querySelector('.pcard-title').textContent + '\n\n';
-    all += c.querySelector('.pcard-text').textContent + '\n\n---\n\n';
-  });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([all],{type:'text/markdown'}));
-  a.download = 'synapse-' + new Date().toISOString().slice(0,10) + '.md'; a.click();
-  toast('已下载','success');
-}
-
-function clearResults() {
-  document.getElementById('results').classList.remove('show');
-  document.getElementById('exportBar').style.display = 'none';
-  document.getElementById('sd').className = 'dot';
-  document.getElementById('st').textContent = '就绪';
+async function doCustomSearch(){
+  var kw=document.getElementById('searchKw').value.trim();
+  if(!kw){toast('请输入搜索需求','warn');return}
+  var plats=[];document.querySelectorAll('#searchPanel .pch.on').forEach(function(c){plats.push(c.dataset.sk)});
+  if(!plats.length){toast('请选择至少一个平台','warn');return}
+  
+  setBusy(true,'🔎 搜索中...');document.getElementById('res').className='res';
+  
+  try{
+    if(sType==='hot'||sType==='both'){
+      var hr=await fetch('/api/hot-custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keyword:kw,platforms:plats})});
+      var hd=await hr.json();
+      if(hd.success&&hd.topics.length){
+        document.getElementById('rbox').style.display='block';
+        document.getElementById('rag').innerHTML='<div class="ac" style="grid-column:1/-1;font-size:12px;color:var(--c)">🔎 自定义搜索: '+kw+' · '+hd.topics.length+'条热点 (点击生成)</div>'+
+          hd.topics.map(function(tp,i){return '<div class="ac" style="cursor:pointer" onclick="document.getElementById(\'topic\').value=\''+(tp.title||'').replace(/'/g,'\\\'')+'\';doGen()"><div class="n">#'+(i+1)+' · '+tp.score+'热度</div><div class="t">'+esc(tp.title)+'</div><div class="pt">'+esc(tp.source||'')+' · '+esc(tp.brief||'')+'</div></div>'}).join('');
+      }
+    }
+    
+    if(sType==='viral'||sType==='both'){
+      var vr=await fetch('/api/fetch-viral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:plats[0],category:null,keyword:kw})});
+      var vd=await vr.json();
+      if(vd.success&&vd.posts.length){
+        var analyzed=[];
+        for(var i=0;i<vd.posts.length;i++){
+          document.getElementById('lt').textContent='拆解 '+(i+1)+'/'+vd.posts.length+'...';
+          var ar=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:vd.posts[i].title+'\n\n'+vd.posts[i].body,platform:plats[0]})});
+          var ad=await ar.json();
+          if(ad.success)analyzed.push({post:vd.posts[i],analysis:ad.analysis});
+        }
+        document.getElementById('vbox').style.display='block';
+        var vh='<div style="font-size:11px;color:var(--m);margin-bottom:8px">🔎 自定义搜索: '+kw+' · Top'+analyzed.length+'爆款拆解</div>';
+        analyzed.forEach(function(item,idx){
+          var a=item.analysis,p=item.post,sc=parseInt(a.score)||0,scC=sc>=80?'#00cc66':sc>=60?'#EF9F27':'#E24B4A';
+          vh+='<div><span class="scr" style="color:'+scC+'">⭐'+sc+'</span>';
+          vh+='<div class="vt">#'+(idx+1)+' '+esc((p.title||'').substring(0,60))+'</div>';
+          if(p.engagement)vh+='<div class="vd">❤️'+(p.likes||0).toLocaleString()+' · ⭐'+(p['收藏']||0).toLocaleString()+' · 💬'+(p['评论']||0).toLocaleString()+' · @'+esc(p.author||'')+'</div>';
+          if(a.hookAnalysis)vh+='<div class="vd">🎣 '+esc(a.hookAnalysis)+'</div>';
+          if(a.reusableTemplate)vh+='<div class="vs">📋 '+esc(a.reusableTemplate)+'</div>';
+          vh+='</div>';
+        });
+        document.getElementById('vl').innerHTML=vh;
+      }
+    }
+    document.getElementById('res').className='res on';
+    document.getElementById('sd').className='dt ok';document.getElementById('st').textContent='✅ 搜索完成';
+    toast('搜索完成','ok');
+  }catch(e){dbg('Search error: '+e.message);toast('错误','error')}
+  setBusy(false);
 }
 </script>
-
 </body>
 </html>
