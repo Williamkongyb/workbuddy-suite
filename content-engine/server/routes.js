@@ -106,20 +106,20 @@ function setupRoutes(app) {
       if (!keyword) return res.status(400).json({ error: '请提供关键词' });
       var genResults = {}, analyzed = [];
       
-      for (var pi = 0; pi < Math.min((platforms||[]).length, 2); pi++) {
+      for (var pi = 0; pi < Math.min((platforms||[]).length, 1); pi++) {
         var pk = platforms[pi], plat = PLATFORMS[pk]; if (!plat) continue;
-        var fr = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.8, max_tokens: 3000, messages: [{ role: 'user', content: '为'+plat.name+'平台，关键词"'+keyword+'"，生成3条爆款文案。JSON数组含title/body。' }] });
+        var fr = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.8, max_tokens: 1500, messages: [{ role: 'user', content: '为'+plat.name+'平台，关键词"'+keyword+'"，生成2条爆款文案。JSON数组含title/body。' }] });
         var posts = parseJSON(fr.choices ? fr.choices[0].message.content : '') || [];
-        for (var pj = 0; pj < Math.min(posts.length, 3); pj++) {
+        for (var pj = 0; pj < Math.min(posts.length, 2); pj++) {
           var analysis = await analyzeCopy(posts[pj].title + '\n\n' + posts[pj].body, pk);
           analyzed.push({ platform: pk, post: posts[pj], analysis: analysis });
         }
       }
       
-      var templates = analyzed.filter(function(a){ return a.analysis && a.analysis.reusableTemplate; }).slice(0, 3).map(function(a,i){ return '模板'+(i+1)+':'+a.analysis.reusableTemplate; }).join('\n');
-      for (var gi = 0; gi < Math.min((platforms||[]).length, 2); gi++) {
+      var templates = analyzed.filter(function(a){ return a.analysis && a.analysis.reusableTemplate; }).slice(0, 2).map(function(a,i){ return '模板'+(i+1)+':'+a.analysis.reusableTemplate; }).join('\n');
+      for (var gi = 0; gi < Math.min((platforms||[]).length, 1); gi++) {
         var gk = platforms[gi], plat = PLATFORMS[gk]; if (!plat) continue;
-        var gr = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.8, max_tokens: 2500, messages: [{ role: 'user', content: '基于以下模板，为【'+plat.name+'】创作关于"'+keyword+'"的原创文案。\n模板：\n'+templates+'\n输出：第一行标题，空行后正文。' }] });
+        var gr = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.8, max_tokens: 1500, messages: [{ role: 'user', content: '基于以下模板，为【'+plat.name+'】创作关于"'+keyword+'"的原创文案。\n模板：\n'+templates+'\n输出：第一行标题，空行后正文。' }] });
         var gc = (gr.choices ? gr.choices[0].message.content : '').replace(/^(好的|以下是).*?[\n\r]+/i, '');
         var lines = gc.split('\n'), title = '', bs = 0;
         for (var l = 0; l < lines.length; l++) { if (lines[l].trim()) { title = lines[l].trim(); bs = l + 1; break; } }
