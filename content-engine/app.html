@@ -66,6 +66,9 @@ textarea.inp{line-height:1.7}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .mt8{margin-top:8px}
 .p20{padding:30px 40px}
+.skel{background:linear-gradient(90deg,var(--ih) 25%,var(--card) 50%,var(--ih) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;height:14px;margin-bottom:6px}
+.skel.w80{width:80%}.skel.w60{width:60%}.skel.w40{width:40%}.skel.card{height:80px;margin-bottom:8px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 </style>
 </head>
 <body>
@@ -150,6 +153,7 @@ function renderTopics(){
 }
 async function mineTopics(){
   var kw=document.getElementById('tkw').value.trim();if(!kw){t('Enter a keyword','warn');return};t('Mining topics...','warn');
+  document.getElementById('tr').innerHTML='<div class="skel card"></div><div class="skel card w80"></div><div class="skel card w60"></div>';
   var d=await api('/api/polish',{text:'Generate 15 content topics about ['+kw+'], different angles. One per line starting with -.',action:'format'});
   if(d.success){
     var topics=d.polished.split('\n').filter(function(l){return l.trim()});
@@ -175,6 +179,7 @@ function renderCompetitors(){
 }
 async function analyzeComp(){
   var u=document.getElementById('cur').value.trim();if(!u){t('Enter text','warn');return};t('Analyzing...','warn');
+  document.getElementById('cr').innerHTML='<div class="skel w80"></div><div class="skel w60"></div><div class="skel w40"></div><div class="skel w80"></div><div class="skel w60"></div>';
   var d=await api('/api/polish',{text:'Analyze this content strategy: '+u+'\nExtract: hook methods, structure patterns, reusable templates, audience targeting.',action:'format'});
   if(d.success){document.getElementById('cr').innerHTML='<div class="card" style="white-space:pre-wrap;line-height:1.7">'+d.polished+'</div>';t('Complete','ok')}
 }
@@ -184,6 +189,7 @@ function renderSEO(){
 }
 async function analyzeSEO(){
   var tx=document.getElementById('st').value.trim();if(!tx){t('Paste content','warn');return};t('Scoring...','warn');
+  document.getElementById('sr').innerHTML='<div class="skel w80"></div><div class="skel w60"></div><div class="skel w40"></div><div class="skel w80"></div>';
   var d=await api('/api/polish',{text:'Analyze SEO for this content. Rate: 1.title appeal(1-10) 2.keyword density 3.structure 4.improvements. Content:'+tx.substring(0,500),action:'format'});
   if(d.success){document.getElementById('sr').innerHTML='<div class="card" style="margin-top:8px;white-space:pre-wrap;line-height:1.7">'+d.polished+'</div>';t('Complete','ok')}
 }
@@ -193,6 +199,7 @@ function renderABTest(){
 }
 async function generateAB(){
   var tp=document.getElementById('abt').value.trim();if(!tp){t('Enter topic','warn');return};t('Generating...','warn');
+  document.getElementById('abr').innerHTML='<div class="skel card"></div><div class="skel card w80"></div><div class="skel card w60"></div>';
   var d=await api('/api/generate',{topic:tp+' (produce 3 distinct versions separated by ###)',platforms:['xiaohongshu']});
   if(d.success){
     var vv=(d.platforms.xiaohongshu.body||'').split('###').filter(function(s){return s.trim()}).slice(0,3);
@@ -206,6 +213,7 @@ function renderCompliance(){
 }
 async function scanCompliance(){
   var tx=document.getElementById('cpt').value.trim();if(!tx){t('Paste content','warn');return};t('Scanning...','warn');
+  document.getElementById('cpr').innerHTML='<div class="skel w80"></div><div class="skel w60"></div><div class="skel w40"></div><div class="skel w80"></div>';
   var d=await api('/api/polish',{text:'Check for sensitive words, violations, exaggerated claims. List risks:'+tx.substring(0,800),action:'format'});
   if(d.success){document.getElementById('cpr').innerHTML='<div class="card" style="margin-top:8px;white-space:pre-wrap;line-height:1.7">'+d.polished+'</div>';t('Complete','ok')}
 }
