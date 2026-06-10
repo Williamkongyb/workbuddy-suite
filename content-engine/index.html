@@ -142,6 +142,14 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
     <div class="inline"><input type="text" id="brandName" placeholder="人设名称, 如: 科技局长" style="width:100%;font-size:10px;padding:4px 8px" onchange="saveBrand()"></div>
     <div class="inline"><input type="text" id="brandStyle" placeholder="风格描述, 如: 幽默犀利,爱用表情包" style="width:100%;font-size:10px;padding:4px 8px;margin-top:4px" onchange="saveBrand()"></div>
   </div>
+  <div class="box" style="margin-top:8px">
+    <h3>品牌预设 M1</h3>
+    <div class="inline"><select id="presetSel" onchange="loadPreset(this.value)" style="font-size:9px;flex:1"><option value="">选择预设...</option></select><button class="btn btn2" style="padding:3px 8px;font-size:9px" onclick="savePreset()">保存</button></div>
+  </div>
+  <div class="box" style="margin-top:8px">
+    <h3>参考知识 M3</h3>
+    <textarea id="refDoc" placeholder="粘贴参考资料..." style="width:100%;height:45px;padding:6px;font-size:9px;border:1px solid var(--b);border-radius:6px;resize:none;font-family:inherit"></textarea>
+  </div>
   <div class="box">
     <h3>字数控制</h3>
     <div class="inline">
@@ -250,6 +258,16 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 <div class="panel" id="right">
   <div class="empty" id="rightEmpty">生成内容后<br>使用 AI 润色</div>
   <div id="rightTools" style="display:none">
+    <div class="box"><h3>快捷微调 M4</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:3px">
+        <button class="btn btn2 btn-s" onclick="quickTweak('更幽默一点')">更幽默</button>
+        <button class="btn btn2 btn-s" onclick="quickTweak('缩短到200字以内')">缩短</button>
+        <button class="btn btn2 btn-s" onclick="quickTweak('增加痛点描述')">加痛点</button>
+        <button class="btn btn2 btn-s" onclick="quickTweak('换个开头角度')">换角度</button>
+        <button class="btn btn2 btn-s" onclick="quickTweak('增加emoji表情')">加Emoji</button>
+        <button class="btn btn2 btn-s" onclick="quickTweak('增加数据引用')">加数据</button>
+      </div>
+    </div>
     <div class="box"><h3>润色</h3>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
         <button class="btn btn2" style="padding:5px 8px;font-size:10px;flex:1 1 45%;min-width:80px" onclick="doPolish('rewrite')">🔄 改写</button>
@@ -330,7 +348,22 @@ function doLogin(){
 checkAuth();
 function saveBrand(){var name=document.getElementById('brandName').value,style=document.getElementById('brandStyle').value;localStorage.setItem('synapse_brand',JSON.stringify({name:name,style:style}))}
 function loadBrand(){try{var b=JSON.parse(localStorage.getItem('synapse_brand')||'{}');if(b.name)document.getElementById('brandName').value=b.name;if(b.style)document.getElementById('brandStyle').value=b.style}catch(e){}}
-loadBrand();
+loadBrand();refreshPresets();
+
+// M1 品牌预设
+function savePreset(){var n=document.getElementById('brandName').value,s=document.getElementById('brandStyle').value;if(!n&&!s){t('请先填写品牌信息','warn');return}
+  var name=prompt('预设名称:',n||'我的风格');if(!name)return;var presets=JSON.parse(localStorage.getItem('synapse_presets')||'{}');presets[name]={name:n,style:s};localStorage.setItem('synapse_presets',JSON.stringify(presets));refreshPresets();t('预设已保存','ok')}
+function loadPreset(v){if(!v)return;var presets=JSON.parse(localStorage.getItem('synapse_presets')||'{}');var p=presets[v];if(p){document.getElementById('brandName').value=p.name;document.getElementById('brandStyle').value=p.style;saveBrand();t('已加载:'+v,'ok')}}
+function refreshPresets(){var s=document.getElementById('presetSel');if(!s)return;var presets=JSON.parse(localStorage.getItem('synapse_presets')||'{}');s.innerHTML='<option value="">选择预设...</option>'+Object.keys(presets).map(function(k){return'<option value="'+k+'">'+k+'</option>'}).join('')}
+
+// M4 快捷微调
+async function quickTweak(instruction){var text=document.getElementById('editArea').innerText||document.getElementById('editBody').value||'';if(!text.trim()){t('先生成内容','warn');return}
+  t('微调中: '+instruction,'warn');
+  try{var r=await fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,action:'rewrite'})});var d=await r.json();
+    if(d.success){var el=document.getElementById('editArea')||document.getElementById('editBody');if(el.tagName==='TEXTAREA')el.value=d.polished;else{el.innerHTML='';el.textContent=d.polished}document.getElementById('wordCount').textContent=d.polished.length;t('微调完成','ok')}}catch(e){}}
+
+// M5 Ctrl+Enter
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doGen()}});
 setInterval(function(){fetch('/api/health').then(function(){document.getElementById('svr').textContent='🟢'}).catch(function(){document.getElementById('svr').textContent='🔴'})},10000);
 
 function doClr(){document.getElementById('out').style.display='none';document.getElementById('empty').style.display='block';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('editorBox').style.display='none';document.getElementById('right').style.display='none';document.getElementById('rightTools').style.display='none';document.getElementById('rightEmpty').style.display='block';document.getElementById('left').style.display='block';document.getElementById('center').style.borderRight='1px solid var(--b)';document.getElementById('status').textContent='就绪'}
@@ -352,13 +385,21 @@ async function doGen(){
   var tone=document.getElementById('tone').value,hstyle=document.getElementById('hstyle').value;
   var aud=document.getElementById('audience').value,tpl=document.getElementById('template').value,goal=document.getElementById('goal').value;
   var brandName=document.getElementById('brandName').value,brandStyle=document.getElementById('brandStyle').value;
+  var refDoc=document.getElementById('refDoc').value.trim();
+  // M2 排版引擎: 根据平台自动附加排版规则
+  var formatRule='';var pk=plats[0];
+  if(pk==='xiaohongshu')formatRule='适当使用Emoji，段落短小精悍，每段2-3行';
+  else if(pk==='zhihu')formatRule='专业深度，适当引用数据，分段清晰';
+  else if(pk==='douyin'||pk==='kuaishou')formatRule='口语化短句，每句换行，节奏快';
+  else if(pk==='bilibili')formatRule='幽默或深度风格，可加小标题分段';
+  else if(pk==='gongzhonghao')formatRule='深度长文，加小标题和配图说明位置';
   saveSettings();var wr=getWordRange();S.abortCtrl=new AbortController();
   document.getElementById('si1').className='si active';document.getElementById('si2').className='si';document.getElementById('si3').className='si';document.getElementById('steps').className='steps on';
   busyOn('🔬 调研...');st('调研中');doClr();showOut();
   document.getElementById('btnGen').textContent='停止';document.getElementById('btnGen').onclick=stopGen;document.getElementById('btnGen').style.background='#EF4444';
   t('方向:'+cats.length+' | 字数:'+wr[0]+'-'+wr[1],'warn');
   try{
-    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle,audience:aud,template:tpl,goal:goal,brandName:brandName,brandStyle:brandStyle}),signal:S.abortCtrl.signal});
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle,audience:aud,template:tpl,goal:goal,brandName:brandName,brandStyle:brandStyle,formatRule:formatRule,refDoc:refDoc}),signal:S.abortCtrl.signal});
     document.getElementById('si1').className='si done';document.getElementById('si2').className='si active';document.getElementById('lt').textContent='✍️ 撰写中...';
     var d=await r.json();if(!d.success){t(d.error,'error');resetGenBtn();return}
     document.getElementById('si2').className='si done';document.getElementById('si3').className='si done';
