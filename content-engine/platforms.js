@@ -255,6 +255,33 @@ const CATEGORIES = {
         "实操引导：「现在就打开试试，5分钟就能上手」"
       ]
     }
+  },
+  business: {
+    key: "business", name: "商业财经", icon: "💼",
+    persona: "财经评论专家", personaTrait: "犀利、有商业洞察力",
+    contentElements: "商业案例 + 市场分析 + 投资逻辑 + 趋势预判",
+    primaryPlatforms: ["zhihu", "gongzhonghao", "bilibili"],
+    styleNotes: "专业财经分析风格，数据驱动，逻辑严谨",
+    hotSources: ["36氪", "虎嗅", "华尔街见闻"],
+    templates: { hooks: [], structures: [] }
+  },
+  career: {
+    key: "career", name: "职场成长", icon: "📈",
+    persona: "职业发展顾问", personaTrait: "务实、鼓励、有方法论",
+    contentElements: "职场技能 + 晋升策略 + 行业洞察 + 成长故事",
+    primaryPlatforms: ["xiaohongshu", "douyin", "zhihu"],
+    styleNotes: "实用主义风格，可操作性强，有温度",
+    hotSources: ["LinkedIn", "脉脉"],
+    templates: { hooks: [], structures: [] }
+  },
+  emotion: {
+    key: "emotion", name: "情感心理", icon: "💜",
+    persona: "情感心理导师", personaTrait: "温暖、专业、有共情力",
+    contentElements: "情感分析 + 心理洞察 + 关系建议 + 自我成长",
+    primaryPlatforms: ["xiaohongshu", "douyin", "gongzhonghao"],
+    styleNotes: "温柔治愈风，心理学专业视角",
+    hotSources: ["壹心理", "简单心理"],
+    templates: { hooks: [], structures: [] }
   }
 };
 
