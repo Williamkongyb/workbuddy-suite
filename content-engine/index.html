@@ -65,10 +65,10 @@ body{font-family:'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--t
 .pcard:hover{border-color:rgba(0,240,255,.2)}
 .pcard.on{border-color:var(--c)}
 .phead{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;font-size:11px;border-bottom:1px solid var(--b)}
-.pbody{padding:10px 12px;max-height:180px;overflow:hidden}
+.pbody{padding:10px 12px;max-height:none}
 .pbody .tl{font-size:13px;font-weight:600;color:var(--c);margin-bottom:4px}
-.pbody .tx{font-size:11px;line-height:1.6;white-space:pre-wrap;opacity:.8}
-.score{font-size:10px;font-weight:700}
+.pbody .tx{font-size:11px;line-height:1.6;white-space:pre-wrap;opacity:.9}
+.score{font-size:12px;font-weight:700}
 
 .vgrid{display:flex;flex-direction:column;gap:6px}
 .vcard{padding:10px;background:var(--i);border-left:2px solid var(--c);border-radius:0 6px 6px 0;cursor:pointer}
@@ -98,6 +98,15 @@ body{font-family:'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--t
       <button class="btn btn2" onclick="doViral()">爆款</button>
       <button class="btn btn2" onclick="doSearch()">搜索+生成</button>
       <button class="btn btn2" onclick="doClr()">清除</button>
+      <span style="position:relative">
+        <button class="btn btn2" onclick="toggleMenu()">更多</button>
+        <div id="moreMenu" style="display:none;position:absolute;top:100%;left:0;background:var(--s);border:1px solid var(--b);border-radius:8px;padding:4px;min-width:130px;z-index:20;margin-top:4px">
+          <div class="mi" onclick="exportMD()">📋 导出 Markdown</div>
+          <div class="mi" onclick="exportJSON()">📥 导出 JSON</div>
+          <div class="mi" onclick="copyAll()">📄 复制全部</div>
+          <div class="mi" onclick="showHistory()">📊 历史记录</div>
+        </div>
+      </span>
     </div>
     <!-- 搜索面板 -->
     <div id="sp" style="display:none;margin-top:6px">
@@ -165,6 +174,12 @@ init();
 setInterval(function(){fetch('/api/health').then(function(){document.getElementById('svr').textContent='🟢'}).catch(function(){document.getElementById('svr').textContent='🔴'})},10000);
 
 function doClr(){document.getElementById('out').style.display='none';document.getElementById('empty').style.display='block';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('right').style.display='none';document.getElementById('detail').style.display='none';document.getElementById('status').textContent='就绪'}
+
+function toggleMenu(){var m=document.getElementById('moreMenu');m.style.display=m.style.display==='none'?'block':'none'}
+function exportMD(){var md='# Synapse Content Engine\n> '+new Date().toLocaleString('zh-CN')+'\n\n';document.querySelectorAll('.pcard').forEach(function(c){md+='## '+c.querySelector('b').textContent+'\n\n### '+c.querySelector('.tl').textContent+'\n\n'+c.querySelector('.tx').textContent+'\n\n---\n\n'});var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='synapse-'+new Date().toISOString().slice(0,10)+'.md';a.click();t('Markdown已下载','ok');toggleMenu()}
+function exportJSON(){var out={time:new Date().toISOString(),platforms:{}};document.querySelectorAll('.pcard').forEach(function(c){var plat=c.querySelector('b').textContent;out.platforms[plat]={title:c.querySelector('.tl').textContent,body:c.querySelector('.tx')?c.querySelector('.tx').textContent:''}});var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='synapse-'+new Date().toISOString().slice(0,10)+'.json';a.click();t('JSON已下载','ok');toggleMenu()}
+function copyAll(){var all='';document.querySelectorAll('.pcard').forEach(function(c){all+=c.querySelector('b').textContent+'\n'+c.querySelector('.tl').textContent+'\n\n'+c.querySelector('.tx').textContent+'\n\n---\n\n'});navigator.clipboard.writeText(all).then(function(){t('已复制','ok')});toggleMenu()}
+function showHistory(){toggleMenu();t('历史功能开发中...','warn')}
 
 function doSearch(){var p=document.getElementById('sp');p.style.display=p.style.display==='none'?'block':'none'}
 
@@ -241,8 +256,13 @@ function showHotTopics(topics,cat){
 function showPlatforms(d,scs){
   document.getElementById('pg').innerHTML=Object.keys(d||{}).map(function(k){
     var p=d[k],pl=PLATS[k]||{},s=scs&&scs[k]?scs[k]:null;
-    var scoreHtml=s?'<span class="score" style="color:'+(s.total>=80?'#00cc66':s.total>=60?'#EF9F27':'#E24B4A')+'">⭐'+s.total+'</span>':'';
-    return'<div class="pcard" onclick="showDetail(\''+k+'\',\''+(p.title||'').replace(/'/g,'\\\'')+'\',\''+(p.body||'').replace(/\n/g,'\\n').replace(/'/g,'\\\'')+'\',\''+JSON.stringify(s||{}).replace(/'/g,'\\\'')+'\')"><div class="phead"><span>'+pl.icon+' <b>'+pl.name+'</b> '+(p.body||'').length+'字</span>'+scoreHtml+'</div><div class="pbody"><div class="tl">'+sc(p.title||'')+'</div><div class="tx">'+sc((p.body||'').substring(0,150))+'...</div></div></div>';
+    var scoreBar='';
+    if(s&&s.total){
+      var scC=s.total>=80?'#00cc66':s.total>=60?'#EF9F27':'#E24B4A';
+      scoreBar='<div style="margin-bottom:6px;display:flex;gap:8px;align-items:center"><span class="score" style="color:'+scC+'">⭐'+s.total+'/100</span><span style="font-size:9px;color:var(--m)">🎣'+s.hookQuality+' 📐'+s.structureQuality+' 🎯'+s.platformFit+' 💓'+s.emotionCurve+' 💡'+s.actionability+'</span></div>';
+      if(s.suggestions) scoreBar+='<div style="font-size:9px;color:var(--m);margin-bottom:6px">💡 '+s.suggestions.map(function(sg){return sc(sg)}).join(' | ')+'</div>';
+    }
+    return'<div class="pcard"><div class="phead"><span>'+pl.icon+' <b>'+pl.name+'</b> '+(p.body||'').length+'字</span><span class="score" style="color:'+(s&&s.total?(s.total>=80?'#00cc66':'#EF9F27'):'var(--m)')+'">'+(s&&s.total?'⭐'+s.total:'')+'</span></div><div class="pbody"><div class="tl">'+sc(p.title||'')+'</div>'+scoreBar+'<div class="tx" style="max-height:300px;overflow-y:auto">'+sc(p.body||'')+'</div></div></div>';
   }).join('');
 }
 
