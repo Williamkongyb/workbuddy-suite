@@ -68,6 +68,17 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 .inline select{padding:4px 20px 4px 8px;font-size:10px;border-radius:6px;border:1px solid var(--b);background:var(--card);color:var(--t);appearance:none}
 @media(max-width:1024px){#left{width:260px}#right{width:260px}}
 @media(max-width:768px){.main{flex-direction:column}#left{width:100%;border-right:none;border-bottom:1px solid var(--b);max-height:45vh}#center{min-height:30vh}#right{width:100%;border-top:1px solid var(--b);min-height:20vh}#editArea{min-height:150px;max-height:250px}.top{padding:8px 12px}.panel{padding:8px}.chips{gap:2px}.chip,.pchip{padding:4px 8px;font-size:9px}}
+.cardgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cardgrid .chip{min-width:0;padding:10px 8px;border-radius:12px;flex-direction:row;justify-content:flex-start;gap:6px}
+.cardgrid .chip .ic{font-size:20px}
+.steps{display:none;gap:12px;align-items:center;margin-bottom:10px;padding:8px 14px;background:var(--card);border-radius:var(--r);border:1px solid var(--b)}
+.steps.on{display:flex}
+.steps .si{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--m)}
+.steps .si.active{color:var(--accent);font-weight:600}
+.steps .si.done{color:#22C55E}
+.inline{display:flex;gap:6px;align-items:center;margin-top:6px}
+.inline label{font-size:10px;color:var(--m);white-space:nowrap}
+.inline select{padding:4px 20px 4px 8px;font-size:10px;border-radius:6px;border:1px solid var(--b);background:var(--card);color:var(--t);appearance:none}
 </style>
 </head>
 <body>
@@ -98,6 +109,12 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 <div class="panel" id="left">
   <div class="box"><h3>内容方向</h3><div class="chips" id="cats"></div></div>
   <div class="box"><h3>发布平台</h3><div class="chips" id="plats"></div></div>
+  <div class="box">
+    <h3>写作设定</h3>
+    <div class="inline"><label>语气</label><select id="tone" onchange="saveSettings()"><option value="">智能</option><option value="humor">幽默风趣</option><option value="serious">严肃专业</option><option value="warm">温暖治愈</option><option value="sharp">犀利观点</option><option value="story">故事化</option><option value="marketing">营销感召</option><option value="casual">口语轻松</option></select></div>
+    <div class="inline"><label>标题</label><select id="hstyle" onchange="saveSettings()"><option value="">自动</option><option value="number">数字型(3个/5大)</option><option value="question">疑问型(你知道吗)</option><option value="suspense">悬念型(竟然)</option><option value="contrast">对比型(VS)</option><option value="painpoint">痛点型(终于)</option></select></div>
+    <div class="inline"><label>大纲</label><button class="btn btn2" style="padding:4px 10px;font-size:10px" onclick="doOutline()">AI生成</button><span id="outlineResult" style="font-size:9px;color:var(--accent);margin-left:4px"></span></div>
+  </div>
   <div class="box">
     <h3>字数控制</h3>
     <div class="inline">
@@ -171,6 +188,7 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
     <div style="margin-top:14px;font-size:10px;color:var(--m)">点击话题快速填入 · 或左侧输入任意主题</div>
   </div>
   <div id="out" style="display:none">
+    <div class="steps" id="steps"><div class="si" id="si1">🔍 调研</div><div class="si" id="si2">→ ✍️ 撰写</div><div class="si" id="si3">→ ⭐ 评分</div></div>
     <div class="box" id="rbox" style="display:none"><h3>调研结果</h3><div class="rgrid" id="rag"></div></div>
     <div class="box" id="vbox" style="display:none"><h3>爆款拆解</h3><div class="vgrid" id="vg"></div></div>
     <div class="box" id="editorBox" style="display:none">
@@ -253,8 +271,8 @@ function initFallback(){
   renderChips();t('离线模式','warn');
 }
 function renderChips(){
-  var cg=document.getElementById('cats'),pg=document.getElementById('plats');
-  Object.keys(S.cats).forEach(function(k){var d=document.createElement('span');d.className='chip';d.dataset.k=k;d.innerHTML='<span class="ic">'+S.cats[k].icon+'</span>'+S.cats[k].name;d.onclick=function(){d.classList.toggle('on');saveSettings()};cg.appendChild(d)});
+  var cg=document.getElementById('cats'),pg=document.getElementById('plats');cg.className='cardgrid';
+  Object.keys(S.cats).forEach(function(k){var d=document.createElement('span');d.className='chip';d.dataset.k=k;d.innerHTML='<span class="ic">'+S.cats[k].icon+'</span><span class="lb">'+S.cats[k].name+'</span>';d.onclick=function(){d.classList.toggle('on');saveSettings()};cg.appendChild(d)});
   Object.keys(S.platforms).forEach(function(k){var d=document.createElement('span');d.className='pchip on';d.dataset.k=k;d.innerHTML=S.platforms[k].icon;d.title=S.platforms[k].name;d.onclick=function(){d.classList.toggle('on');saveSettings()};pg.appendChild(d)});
 }
 init();updateWordRange();
@@ -288,13 +306,17 @@ async function doGen(){
   var topic=document.getElementById('topic').value.trim();if(!topic){t('请输入主题','warn');return}
   var plats=getPlats();if(!plats.length){t('请选择平台','warn');return}
   var cats=getCats();var custom=document.getElementById('customPrompt').value.trim();
+  var tone=document.getElementById('tone').value,hstyle=document.getElementById('hstyle').value;
   saveSettings();var wr=getWordRange();S.abortCtrl=new AbortController();
+  document.getElementById('si1').className='si active';document.getElementById('si2').className='si';document.getElementById('si3').className='si';document.getElementById('steps').className='steps on';
   busyOn('🔬 调研...');st('调研中');doClr();showOut();
   document.getElementById('btnGen').textContent='停止';document.getElementById('btnGen').onclick=stopGen;document.getElementById('btnGen').style.background='#EF4444';
-  t('方向:'+cats.length+'个 | 字数:'+wr[0]+'-'+wr[1]+' 字','warn');
+  t('方向:'+cats.length+' | 字数:'+wr[0]+'-'+wr[1],'warn');
   try{
-    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom}),signal:S.abortCtrl.signal});
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr,customPrompt:custom,tone:tone,headlineStyle:hstyle}),signal:S.abortCtrl.signal});
+    document.getElementById('si1').className='si done';document.getElementById('si2').className='si active';document.getElementById('lt').textContent='✍️ 撰写中...';
     var d=await r.json();if(!d.success){t(d.error,'error');resetGenBtn();return}
+    document.getElementById('si2').className='si done';document.getElementById('si3').className='si done';
     showResearch(d.research);showPlatforms(d.platforms,d.scores);st('完成 '+plats.length+'平台');t('已生成','ok');
   }catch(e){if(e.name!=='AbortError')t('错误','error')}
   resetGenBtn();busyOff();
@@ -354,6 +376,11 @@ function loadDraft(){var drafts=JSON.parse(localStorage.getItem('synapse_drafts'
 function refreshDrafts(){var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');document.getElementById('draftList').innerHTML=drafts.map(function(d,i){return'<div style="padding:4px 0;border-bottom:1px solid var(--b);cursor:pointer" onclick="loadDraftItem('+i+')">'+(i+1)+'. '+(d.title||'无标题').substring(0,30)+'<span style="float:right">'+d.time.slice(0,10)+'</span></div>'}).join('');}
 function loadDraftItem(i){var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');if(!drafts[i])return;document.getElementById('editTitle').value=drafts[i].title;var el=document.getElementById('editArea');el.innerHTML='';el.textContent=drafts[i].text;el.contentEditable='true';document.getElementById('wordCount').textContent=drafts[i].text.length;document.getElementById('editorBox').style.display='block';document.getElementById('rightTools').style.display='block';document.getElementById('rightEmpty').style.display='none';showRight();showOut();}
 function copyEdited(){navigator.clipboard.writeText(document.getElementById('editArea').innerText||'').then(function(){t('已复制','ok')});}
+async function doOutline(){var topic=document.getElementById('topic').value.trim();if(!topic){t('先输入主题','warn');return}
+  t('生成大纲中...','warn');var cats=getCats();
+  try{var r=await fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'为【'+topic+'】生成文章大纲，输出5个要点，每个一行，用-开头',action:'format'})});var d=await r.json();
+    if(d.success){document.getElementById('outlineResult').textContent='√ 大纲已生成';var el=document.getElementById('editArea');el.innerHTML='';el.textContent=d.polished;el.contentEditable='true';document.getElementById('editorBox').style.display='block';document.getElementById('wordCount').textContent=d.polished.length;showOut();showRight();document.getElementById('rightTools').style.display='block';document.getElementById('rightEmpty').style.display='none';t('大纲已填充到编辑器','ok')}}
+  catch(e){t('大纲失败','error')}}
 </script>
 </body>
 </html>
