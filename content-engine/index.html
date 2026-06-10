@@ -183,11 +183,11 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 <div id="toast"></div>
 
 <script>
-var CATS={},PLATS={},actCat=null,busy=false,sType='both',allPlatforms={},currentPlatform='',abortCtrl=null;
+var S={cats:{}, platforms:{}, catsActive:[], platformsActive:[], topic:'', busy:false, abortCtrl:null, allPlatforms:{}, currentPlatform:'', editorDirty:false};
 
 // 状态记忆
 var settings=JSON.parse(localStorage.getItem('synapse_settings')||'{}');
-function saveSettings(){var s={actCat:actCat,plats:getPlats(),duration:document.getElementById('wcDuration').value,platform:document.getElementById('wcPlatform').value};localStorage.setItem('synapse_settings',JSON.stringify(s))}
+function saveSettings(){var s={cats:getCats(),plats:getPlats(),duration:document.getElementById('wcDuration').value,platform:document.getElementById('wcPlatform').value};localStorage.setItem('synapse_settings',JSON.stringify(s))}
 function loadSettings(){if(!settings.plats)return;document.getElementById('wcDuration').value=settings.duration||'45s';document.getElementById('wcPlatform').value=settings.platform||'xiaohongshu';updateWordRange();if(settings.actCat){actCat=settings.actCat;var chips=document.querySelectorAll('#cats .chip');chips.forEach(function(c){c.classList.remove('on');if(c.dataset.k===settings.actCat)c.classList.add('on')})};if(settings.plats){document.querySelectorAll('#plats .pchip').forEach(function(c){c.classList.remove('on');if(settings.plats.indexOf(c.dataset.k)>=0)c.classList.add('on')})}}
 
 var wordMap={
@@ -213,18 +213,18 @@ function showRight(){document.getElementById('right').style.display='block'}
 function getPlats(){var a=[];document.querySelectorAll('#plats .pchip.on').forEach(function(c){a.push(c.dataset.k)});return a}
 
 async function init(){
-  try{var r=await fetch('/api/config');var d=await r.json();CATS=d.categories;PLATS=d.platforms}catch(e){initFallback();return}
+  try{var r=await fetch('/api/config');var d=await r.json();S.cats=d.categories;S.platforms=d.platforms}catch(e){initFallback();return}
   renderChips();loadSettings();t('已连接','ok');
 }
 function initFallback(){
-  CATS={ai_special:{name:'AI专版',icon:'🤖'},hot_news:{name:'社会热点',icon:'🔥'},ming_history:{name:'明朝历史',icon:'🏯'},urban_geo:{name:'城市人文',icon:'🏙️'},tech_frontier:{name:'科技前沿',icon:'🚀'}};
-  PLATS={xiaohongshu:{name:'小红书',icon:'📕'},douyin:{name:'抖音',icon:'🎵'},zhihu:{name:'知乎',icon:'🔵'},bilibili:{name:'B站',icon:'💗'},gongzhonghao:{name:'公众号',icon:'💚'},shipinhao:{name:'视频号',icon:'👁️'},kuaishou:{name:'快手',icon:'🧡'}};
+  S.cats={ai_special:{name:'AI专版',icon:'🤖'},hot_news:{name:'社会热点',icon:'🔥'},ming_history:{name:'明朝历史',icon:'🏯'},urban_geo:{name:'城市人文',icon:'🏙️'},tech_frontier:{name:'科技前沿',icon:'🚀'},business:{name:'商业财经',icon:'💼'},career:{name:'职场成长',icon:'📈'},emotion:{name:'情感心理',icon:'💜'}};
+  S.platforms={xiaohongshu:{name:'小红书',icon:'📕'},douyin:{name:'抖音',icon:'🎵'},zhihu:{name:'知乎',icon:'🔵'},bilibili:{name:'B站',icon:'💗'},gongzhonghao:{name:'公众号',icon:'💚'},shipinhao:{name:'视频号',icon:'👁️'},kuaishou:{name:'快手',icon:'🧡'}};
   renderChips();t('离线模式','warn');
 }
 function renderChips(){
   var cg=document.getElementById('cats'),pg=document.getElementById('plats');
-  Object.keys(CATS).forEach(function(k){var d=document.createElement('span');d.className='chip';d.dataset.k=k;d.innerHTML=CATS[k].icon+' '+CATS[k].name;d.onclick=function(){actCat=k;document.querySelectorAll('#cats .chip').forEach(function(c){c.classList.remove('on')});d.classList.add('on');saveSettings()};cg.appendChild(d)});
-  Object.keys(PLATS).forEach(function(k){var d=document.createElement('span');d.className='pchip on';d.dataset.k=k;d.innerHTML=PLATS[k].icon;d.title=PLATS[k].name;d.onclick=function(){d.classList.toggle('on');saveSettings()};pg.appendChild(d)});
+  Object.keys(S.cats).forEach(function(k){var d=document.createElement('span');d.className='chip';d.dataset.k=k;d.innerHTML='<span class="ic">'+S.cats[k].icon+'</span>'+S.cats[k].name;d.onclick=function(){d.classList.toggle('on');saveSettings()};cg.appendChild(d)});
+  Object.keys(S.platforms).forEach(function(k){var d=document.createElement('span');d.className='pchip on';d.dataset.k=k;d.innerHTML=S.platforms[k].icon;d.title=S.platforms[k].name;d.onclick=function(){d.classList.toggle('on');saveSettings()};pg.appendChild(d)});
 }
 init();updateWordRange();
 setInterval(function(){fetch('/api/health').then(function(){document.getElementById('svr').textContent='🟢'}).catch(function(){document.getElementById('svr').textContent='🔴'})},10000);
@@ -243,12 +243,13 @@ function doSearch(){var p=document.getElementById('sp');p.style.display=p.style.
 async function doGen(){
   var topic=document.getElementById('topic').value.trim();if(!topic){t('请输入主题','warn');return}
   var plats=getPlats();if(!plats.length){t('请选择平台','warn');return}
-  saveSettings();var wr=getWordRange();abortCtrl=new AbortController();
+  var cats=getCats();
+  saveSettings();var wr=getWordRange();S.abortCtrl=new AbortController();
   busyOn('🔬 调研...');st('调研中');doClr();showOut();
   document.getElementById('btnGen').textContent='停止';document.getElementById('btnGen').onclick=stopGen;document.getElementById('btnGen').style.background='#EF4444';
-  t('目标字数: '+wr[0]+'-'+wr[1]+' 字','warn');
+  t('方向:'+cats.length+'个 | 字数:'+wr[0]+'-'+wr[1]+' 字','warn');
   try{
-    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,category:actCat,wordRange:wr}),signal:abortCtrl.signal});
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,categories:cats,wordRange:wr}),signal:S.abortCtrl.signal});
     var d=await r.json();if(!d.success){t(d.error,'error');resetGenBtn();return}
     showResearch(d.research);showPlatforms(d.platforms,d.scores);st('完成 '+plats.length+'平台');t('已生成','ok');
   }catch(e){if(e.name!=='AbortError')t('错误','error')}
@@ -256,14 +257,14 @@ async function doGen(){
 }
 
 function resetGenBtn(){var b=document.getElementById('btnGen');b.textContent='生成';b.onclick=doGen;b.style.background='';}
-function stopGen(){if(abortCtrl){abortCtrl.abort();abortCtrl=null}t('已停止','warn');resetGenBtn();busyOff()}
+function stopGen(){if(S.abortCtrl){S.abortCtrl.abort();S.abortCtrl=null}t('已停止','warn');resetGenBtn();busyOff()}
 
-async function doHot(){var cat=actCat||'ai_special';busyOn('🔥 抓取');st('抓取中');doClr();showOut();
+async function doHot(){var cats=getCats();var cat=cats[0];busyOn('🔥 抓取');st('抓取中');doClr();showOut();
   try{var r=await fetch('/api/hot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:cat})});var d=await r.json();if(!d.success){t(d.error,'error');busyOff();return}
     document.getElementById('rbox').style.display='block';showHotTopics(d.topics,cat);st(d.topics.length+'条');t('可点击生成','ok')}catch(e){t('错误','error')}busyOff();}
 
 async function doViral(){var plats=getPlats();if(!plats.length){t('请选平台','warn');return}var pk=plats[0];busyOn('🔍 拆解');st('抓取中');doClr();showOut();
-  try{var fr=await fetch('/api/fetch-viral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:pk,category:actCat})});var fd=await fr.json();if(!fd.success||!fd.posts.length){t('未抓到','error');busyOff();return}
+  try{var fr=await fetch('/api/fetch-viral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:pk,category:getCats()[0]})});var fd=await fr.json();if(!fd.success||!fd.posts.length){t('未抓到','error');busyOff();return}
     var a=[];for(var i=0;i<fd.posts.length;i++){st('拆解'+(i+1)+'/'+fd.posts.length);var ar=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:fd.posts[i].title+'\n\n'+fd.posts[i].body,platform:pk})});var ad=await ar.json();if(ad.success)a.push({p:fd.posts[i],a:ad.analysis})}
     showViral(a,pk);st('拆解'+a.length+'条');t('完成','ok')}catch(e){t('错误','error')}busyOff();}
 
@@ -284,13 +285,13 @@ function showHotTopics(topics,cat){document.getElementById('rag').innerHTML='<di
 
 function showPlatforms(d,scs){allPlatforms=d;var keys=Object.keys(d||{});if(!keys.length)return;injectPlatform(keys[0],d,scs);renderPlatSwitcher(keys);}
 
-function injectPlatform(k,d,scs){currentPlatform=k;var p=d[k],pl=PLATS[k]||{},s=scs&&scs[k]?scs[k]:null;
+function injectPlatform(k,d,scs){currentPlatform=k;var p=d[k],pl=S.platforms[k]||{},s=scs&&scs[k]?scs[k]:null;
   document.getElementById('editorBox').style.display='block';document.getElementById('editorMeta').textContent=pl.icon+' '+pl.name+' | '+(p.body||'').length+'字'+(s&&s.total?' | ⭐'+s.total:'');
   document.getElementById('editTitle').value=p.title||'';var el=document.getElementById('editArea');el.innerHTML='';el.textContent=p.body||'';el.contentEditable='true';
   document.getElementById('wordCount').textContent=(p.body||'').length;document.getElementById('rightEmpty').style.display='none';document.getElementById('rightTools').style.display='block';showRight();refreshDrafts();}
 
 function renderPlatSwitcher(keys){var ps=document.getElementById('platSwitcher');if(!keys||keys.length<=1){ps.innerHTML='';return}
-  ps.innerHTML='<span style="font-size:10px;color:var(--m)">切换</span> <select onchange="switchPlat(this.value)" style="background:var(--card);color:var(--t);border:1px solid var(--b);border-radius:6px;font-size:10px;padding:3px 20px 3px 6px;margin-left:4px">'+keys.map(function(k){return'<option value="'+k+'"'+(k===currentPlatform?' selected':'')+'>'+((PLATS[k]||{}).icon||'')+' '+((allPlatforms[k].title||k)+'').substring(0,18)+'</option>';}).join('')+'</select>';}
+  ps.innerHTML='<span style="font-size:10px;color:var(--m)">切换</span> <select onchange="switchPlat(this.value)" style="background:var(--card);color:var(--t);border:1px solid var(--b);border-radius:6px;font-size:10px;padding:3px 20px 3px 6px;margin-left:4px">'+keys.map(function(k){return'<option value="'+k+'"'+(k===currentPlatform?' selected':'')+'>'+((S.platforms[k]||{}).icon||'')+' '+((S.allPlatforms[k].title||k)+'').substring(0,18)+'</option>';}).join('')+'</select>';}
 function switchPlat(k){if(!allPlatforms[k])return;injectPlatform(k,allPlatforms,null);var keys=Object.keys(allPlatforms);renderPlatSwitcher(keys);}
 
 function showViral(items,plat){document.getElementById('vbox').style.display='block';document.getElementById('vg').innerHTML='<div style="font-size:10px;color:var(--m);margin-bottom:6px">'+(PLATS[plat]||{}).name+' Top'+items.length+'爆款</div>'+items.map(function(x,i){var a=x.a,p=x.p,sc2=parseInt(a.score)||0,scC=sc2>=80?'#22C55E':sc2>=60?'#F59E0B':'#EF4444';return'<div class="vcard"><span class="score" style="float:right;color:'+scC+'">⭐'+sc2+'</span><div class="vt">#'+(i+1)+' '+sc((p.title||'').substring(0,50))+'</div>'+(a.hookAnalysis?'<div class="vd">🎣 '+sc(a.hookAnalysis)+'</div>':'')+(a.reusableTemplate?'<div class="vs">📋 '+sc(a.reusableTemplate)+'</div>':'')+'</div>';}).join('');}
