@@ -132,6 +132,27 @@ function setupRoutes(app) {
       res.json({ success: true, keyword: keyword, analyzed: analyzed, generated: genResults });
     } catch(e) { res.status(500).json({ error: e.message }); }
   });
+  // API: AI润色
+  app.post('/api/polish', async function(req, res) {
+    try {
+      var { text, action, tone } = req.body;
+      if (!text || !action) return res.status(400).json({ error: '请提供文本和操作' });
+      var { apiCall } = require('./services');
+      var actionMap = {
+        rewrite: '改写以下文本，保持原意但换一种表达方式',
+        expand: '扩写以下文本，增加细节和例子',
+        compress: '精简以下文本，保留核心观点',
+        formal: '将以下文本改为正式专业的语气',
+        casual: '将以下文本改为轻松口语化的语气',
+        viral: '将以下文本优化为更有爆款潜力的风格'
+      };
+      var instruction = actionMap[action] || '优化以下文本';
+      if (tone) instruction += '，语气：' + tone;
+      var resp = await apiCall('/chat/completions', { model: 'deepseek-ai/DeepSeek-V3', temperature: 0.5, max_tokens: 2000, messages: [{ role: 'user', content: instruction + '\n\n文本：\n' + text + '\n\n返回优化后的文本，不要加说明。' }] });
+      var result = resp.choices ? resp.choices[0].message.content : text;
+      res.json({ success: true, action: action, polished: result });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+  });
 }
 
 module.exports = { setupRoutes };

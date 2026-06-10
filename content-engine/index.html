@@ -126,16 +126,39 @@ body{font-family:'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--t
   <div id="out" style="display:none">
     <div class="box" id="rbox" style="display:none"><h3>调研结果</h3><div class="rgrid" id="rag"></div></div>
     <div class="box" id="vbox" style="display:none"><h3>爆款拆解</h3><div class="vgrid" id="vg"></div></div>
-    <div class="pgrid" id="pg"></div>
+    <div class="box" id="editorBox" style="display:none">
+      <h3>编辑工作台 <span style="font-size:10px;color:var(--m);font-weight:400" id="editorMeta"></span></h3>
+      <div class="g"><input type="text" id="editTitle" style="font-size:16px;font-weight:700;color:var(--c);margin-bottom:8px;background:transparent;border:none;border-bottom:1px solid var(--b)" placeholder="标题..."></div>
+      <div id="editArea" contenteditable="true" style="min-height:280px;max-height:480px;overflow-y:auto;padding:12px;background:var(--i);border:1px solid var(--b);border-radius:6px;font-size:13px;line-height:1.8;white-space:pre-wrap;outline:none"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:10px;color:var(--m)">
+        <span>字数: <b id="wordCount">0</b> | Ctrl+S 保存草稿</span>
+        <span>
+          <button class="btn btn2" style="padding:4px 10px;font-size:10px" onclick="saveDraft()">保存草稿</button>
+          <button class="btn btn2" style="padding:4px 10px;font-size:10px" onclick="loadDraft()">加载草稿</button>
+          <button class="btn btn2" style="padding:4px 10px;font-size:10px" onclick="copyEdited()">复制</button>
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="panel" id="right">
-  <div class="empty">点击左侧生成的卡片<br>查看详情</div>
-  <div id="detail" style="display:none">
-    <div class="detail-title" id="dTitle"></div>
-    <div class="box"><h3>Critic 评分</h3><div id="dScore"></div></div>
-    <div class="detail-content" id="dBody"></div>
+  <div class="empty" id="rightEmpty">点击生成内容后<br>在此使用AI润色</div>
+  <div id="rightTools" style="display:none">
+    <div class="box"><h3>AI 润色工具</h3>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="btn btn2" style="text-align:left" onclick="doPolish('rewrite')">改写表达</button>
+        <button class="btn btn2" style="text-align:left" onclick="doPolish('expand')">扩写内容</button>
+        <button class="btn btn2" style="text-align:left" onclick="doPolish('compress')">精简压缩</button>
+        <button class="btn btn2" style="text-align:left" onclick="doPolish('formal')">正式语气</button>
+        <button class="btn btn2" style="text-align:left" onclick="doPolish('casual')">口语风格</button>
+        <button class="btn btn2" style="text-align:left" onclick="doPolish('viral')">爆款优化</button>
+      </div>
+    </div>
+    <div class="box" style="margin-top:8px">
+      <h3>草稿记录</h3>
+      <div id="draftList" style="font-size:10px;color:var(--m);max-height:150px;overflow-y:auto"></div>
+    </div>
   </div>
 </div>
 
@@ -151,6 +174,59 @@ function busyOn(m){busy=true;document.getElementById('btnGen').disabled=true;doc
 function busyOff(){busy=false;document.getElementById('btnGen').disabled=false;document.getElementById('ld').className='ld'}
 function st(s){document.getElementById('status').textContent=s}
 function showOut(){document.getElementById('empty').style.display='none';document.getElementById('out').style.display='block'}
+async function doPolish(action){
+  var text=document.getElementById('editArea').textContent;
+  if(!text.trim()){t('没有可编辑的内容','warn');return}
+  var actionNames={rewrite:'改写表达',expand:'扩写内容',compress:'精简压缩',formal:'正式语气',casual:'口语风格',viral:'爆款优化'};
+  t('AI润色中: '+actionNames[action]+'...','warn');
+  try{
+    var r=await fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,action:action})});
+    var d=await r.json();
+    if(d.success){document.getElementById('editArea').textContent=d.polished;document.getElementById('wordCount').textContent=d.polished.length;t('润色完成','ok')}
+    else t(d.error,'error');
+  }catch(e){t('润色失败','error')}
+}
+
+function saveDraft(){
+  var title=document.getElementById('editTitle').value,text=document.getElementById('editArea').textContent;
+  if(!text.trim()){t('无内容可保存','warn');return}
+  var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');
+  drafts.unshift({title:title,text:text,time:new Date().toISOString()});
+  if(drafts.length>20)drafts=drafts.slice(0,20);
+  localStorage.setItem('synapse_drafts',JSON.stringify(drafts));
+  t('草稿已保存','ok');refreshDrafts();
+}
+
+function loadDraft(){
+  var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');
+  if(!drafts.length){t('暂无草稿','warn');return}
+  var d=drafts[0];
+  document.getElementById('editTitle').value=d.title;document.getElementById('editArea').textContent=d.text;
+  document.getElementById('wordCount').textContent=d.text.length;
+  document.getElementById('editorBox').style.display='block';document.getElementById('rightTools').style.display='block';
+  document.getElementById('rightEmpty').style.display='none';showRight();showOut();
+  t('已加载: '+d.title,'ok');
+}
+
+function refreshDrafts(){
+  var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');
+  document.getElementById('draftList').innerHTML=drafts.map(function(d,i){return'<div style="padding:4px 0;border-bottom:1px solid var(--b);cursor:pointer" onclick="loadDraftItem('+i+')">'+(i+1)+'. '+(d.title||'无标题').substring(0,30)+'<span style="float:right">'+d.time.slice(0,10)+'</span></div>'}).join('');
+}
+
+function loadDraftItem(i){
+  var drafts=JSON.parse(localStorage.getItem('synapse_drafts')||'[]');
+  if(!drafts[i])return;
+  document.getElementById('editTitle').value=drafts[i].title;document.getElementById('editArea').textContent=drafts[i].text;
+  document.getElementById('wordCount').textContent=drafts[i].text.length;
+  document.getElementById('editorBox').style.display='block';document.getElementById('rightTools').style.display='block';
+  document.getElementById('rightEmpty').style.display='none';showRight();showOut();
+}
+
+function copyEdited(){
+  var text=document.getElementById('editArea').textContent;
+  navigator.clipboard.writeText(text).then(function(){t('已复制','ok')});
+}
+
 function showRight(){document.getElementById('right').style.display='block'}
 function getPlats(){var a=[];document.querySelectorAll('#plats .pchip.on').forEach(function(c){a.push(c.dataset.k)});return a}
 
@@ -173,7 +249,7 @@ init();
 
 setInterval(function(){fetch('/api/health').then(function(){document.getElementById('svr').textContent='🟢'}).catch(function(){document.getElementById('svr').textContent='🔴'})},10000);
 
-function doClr(){document.getElementById('out').style.display='none';document.getElementById('empty').style.display='block';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('right').style.display='none';document.getElementById('detail').style.display='none';document.getElementById('status').textContent='就绪'}
+function doClr(){document.getElementById('out').style.display='none';document.getElementById('empty').style.display='block';document.getElementById('rbox').style.display='none';document.getElementById('vbox').style.display='none';document.getElementById('editorBox').style.display='none';document.getElementById('right').style.display='none';document.getElementById('rightTools').style.display='none';document.getElementById('rightEmpty').style.display='block';document.getElementById('status').textContent='就绪'}
 
 function toggleMenu(){var m=document.getElementById('moreMenu');m.style.display=m.style.display==='none'?'block':'none'}
 function exportMD(){var md='# Synapse Content Engine\n> '+new Date().toLocaleString('zh-CN')+'\n\n';document.querySelectorAll('.pcard').forEach(function(c){md+='## '+c.querySelector('b').textContent+'\n\n### '+c.querySelector('.tl').textContent+'\n\n'+c.querySelector('.tx').textContent+'\n\n---\n\n'});var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='synapse-'+new Date().toISOString().slice(0,10)+'.md';a.click();t('Markdown已下载','ok');toggleMenu()}
@@ -254,16 +330,20 @@ function showHotTopics(topics,cat){
 }
 
 function showPlatforms(d,scs){
-  document.getElementById('pg').innerHTML=Object.keys(d||{}).map(function(k){
-    var p=d[k],pl=PLATS[k]||{},s=scs&&scs[k]?scs[k]:null;
-    var scoreBar='';
-    if(s&&s.total){
-      var scC=s.total>=80?'#00cc66':s.total>=60?'#EF9F27':'#E24B4A';
-      scoreBar='<div style="margin-bottom:6px;display:flex;gap:8px;align-items:center"><span class="score" style="color:'+scC+'">⭐'+s.total+'/100</span><span style="font-size:9px;color:var(--m)">🎣'+s.hookQuality+' 📐'+s.structureQuality+' 🎯'+s.platformFit+' 💓'+s.emotionCurve+' 💡'+s.actionability+'</span></div>';
-      if(s.suggestions) scoreBar+='<div style="font-size:9px;color:var(--m);margin-bottom:6px">💡 '+s.suggestions.map(function(sg){return sc(sg)}).join(' | ')+'</div>';
-    }
-    return'<div class="pcard"><div class="phead"><span>'+pl.icon+' <b>'+pl.name+'</b> '+(p.body||'').length+'字</span><span class="score" style="color:'+(s&&s.total?(s.total>=80?'#00cc66':'#EF9F27'):'var(--m)')+'">'+(s&&s.total?'⭐'+s.total:'')+'</span></div><div class="pbody"><div class="tl">'+sc(p.title||'')+'</div>'+scoreBar+'<div class="tx" style="max-height:300px;overflow-y:auto">'+sc(p.body||'')+'</div></div></div>';
-  }).join('');
+  // 注入编辑工作台（取第一个平台内容）
+  var keys=Object.keys(d||{});if(!keys.length)return;
+  var k=keys[0],p=d[k],pl=PLATS[k]||{},s=scs&&scs[k]?scs[k]:null;
+  
+  // 显示编辑器
+  document.getElementById('editorBox').style.display='block';
+  document.getElementById('editorMeta').textContent=pl.icon+' '+pl.name+' | '+(p.body||'').length+'字'+(s&&s.total?' | Critic评分⭐'+s.total:'');
+  document.getElementById('editTitle').value=p.title||'';
+  document.getElementById('editArea').textContent=p.body||'';
+  document.getElementById('wordCount').textContent=(p.body||'').length;
+  document.getElementById('rightEmpty').style.display='none';
+  document.getElementById('rightTools').style.display='block';
+  showRight();
+  refreshDrafts();
 }
 
 function showViral(items,plat){
