@@ -92,10 +92,12 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
     </div>
     <div class="inline">
       <label>视频时长</label>
-      <select id="wcDuration" onchange="updateWordRange()">
+      <select id="wcDuration" onchange="updateWordRange();saveSettings()">
         <option value="15s">15秒</option><option value="30s">30秒</option>
         <option value="45s">45秒</option><option value="60s">60秒</option>
         <option value="3min">3分钟</option><option value="5min">5分钟</option><option value="10min">10分钟</option>
+        <option value="20min">20分钟</option><option value="30min">30分钟</option>
+        <option value="60min">60分钟</option>
       </select>
     </div>
     <div style="font-size:10px;color:var(--accent);margin-top:4px">目标字数: <b id="wordTarget">150-200</b> 字</div>
@@ -181,16 +183,21 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg)
 <div id="toast"></div>
 
 <script>
-var CATS={},PLATS={},actCat=null,busy=false,sType='both',allPlatforms={},currentPlatform='';
+var CATS={},PLATS={},actCat=null,busy=false,sType='both',allPlatforms={},currentPlatform='',abortCtrl=null;
+
+// 状态记忆
+var settings=JSON.parse(localStorage.getItem('synapse_settings')||'{}');
+function saveSettings(){var s={actCat:actCat,plats:getPlats(),duration:document.getElementById('wcDuration').value,platform:document.getElementById('wcPlatform').value};localStorage.setItem('synapse_settings',JSON.stringify(s))}
+function loadSettings(){if(!settings.plats)return;document.getElementById('wcDuration').value=settings.duration||'45s';document.getElementById('wcPlatform').value=settings.platform||'xiaohongshu';updateWordRange();if(settings.actCat){actCat=settings.actCat;var chips=document.querySelectorAll('#cats .chip');chips.forEach(function(c){c.classList.remove('on');if(c.dataset.k===settings.actCat)c.classList.add('on')})};if(settings.plats){document.querySelectorAll('#plats .pchip').forEach(function(c){c.classList.remove('on');if(settings.plats.indexOf(c.dataset.k)>=0)c.classList.add('on')})}}
 
 var wordMap={
-  xiaohongshu:{'15s':[80,120],'30s':[150,220],'45s':[200,300],'60s':[250,350],'3min':[400,600],'5min':[600,900],'10min':[1000,1500]},
-  douyin:{'15s':[60,100],'30s':[120,180],'45s':[150,220],'60s':[200,280],'3min':[350,500],'5min':[500,800],'10min':[800,1200]},
+  xiaohongshu:{'15s':[80,120],'30s':[150,220],'45s':[200,300],'60s':[250,350],'3min':[400,600],'5min':[600,900],'10min':[1000,1500],'20min':[1800,2800],'30min':[2500,4000],'60min':[4000,6000]},
+  douyin:{'15s':[60,100],'30s':[120,180],'45s':[150,220],'60s':[200,280],'3min':[350,500],'5min':[500,800],'10min':[800,1200],'20min':[1500,2500],'30min':[2200,3500],'60min':[3500,5500]},
   zhihu:{default:[800,1500]},bilibili:{default:[1200,2500]},gongzhonghao:{default:[800,2000]},
-  shipinhao:{'15s':[80,120],'30s':[150,220],'45s':[200,300],'60s':[250,350],'3min':[400,600],'5min':[600,1000],'10min':[1000,1500]},
-  kuaishou:{'15s':[60,100],'30s':[120,180],'45s':[150,220],'60s':[200,280],'3min':[350,500],'5min':[500,800],'10min':[800,1200]},
-  tiktok:{'15s':[50,80],'30s':[100,160],'45s':[140,200],'60s':[180,260],'3min':[300,500],'5min':[500,800],'10min':[800,1200]},
-  youtube:{'3min':[400,600],'5min':[600,1000],'10min':[1200,2000]}
+  shipinhao:{'15s':[80,120],'30s':[150,220],'45s':[200,300],'60s':[250,350],'3min':[400,600],'5min':[600,1000],'10min':[1000,1500],'20min':[1800,2800],'30min':[2500,4000],'60min':[4000,6000]},
+  kuaishou:{'15s':[60,100],'30s':[120,180],'45s':[150,220],'60s':[200,280],'3min':[350,500],'5min':[500,800],'10min':[800,1200],'20min':[1500,2500],'30min':[2200,3500],'60min':[3500,5500]},
+  tiktok:{'15s':[50,80],'30s':[100,160],'45s':[140,200],'60s':[180,260],'3min':[300,500],'5min':[500,800],'10min':[800,1200],'20min':[1500,2500],'30min':[2200,3500],'60min':[3500,5500]},
+  youtube:{'3min':[400,600],'5min':[600,1000],'10min':[1200,2000],'20min':[2000,3500],'30min':[3000,5000],'60min':[5000,8000]}
 };
 
 function getWordRange(){var p=document.getElementById('wcPlatform').value,d=document.getElementById('wcDuration').value,b=wordMap[p]||{};return b[d]||b.default||[300,600]}
@@ -207,7 +214,7 @@ function getPlats(){var a=[];document.querySelectorAll('#plats .pchip.on').forEa
 
 async function init(){
   try{var r=await fetch('/api/config');var d=await r.json();CATS=d.categories;PLATS=d.platforms}catch(e){initFallback();return}
-  renderChips();t('已连接','ok');
+  renderChips();loadSettings();t('已连接','ok');
 }
 function initFallback(){
   CATS={ai_special:{name:'AI专版',icon:'🤖'},hot_news:{name:'社会热点',icon:'🔥'},ming_history:{name:'明朝历史',icon:'🏯'},urban_geo:{name:'城市人文',icon:'🏙️'},tech_frontier:{name:'科技前沿',icon:'🚀'}};
@@ -216,8 +223,8 @@ function initFallback(){
 }
 function renderChips(){
   var cg=document.getElementById('cats'),pg=document.getElementById('plats');
-  Object.keys(CATS).forEach(function(k){var d=document.createElement('span');d.className='chip';d.dataset.k=k;d.innerHTML=CATS[k].icon+' '+CATS[k].name;d.onclick=function(){actCat=k;document.querySelectorAll('#cats .chip').forEach(function(c){c.classList.remove('on')});d.classList.add('on')};cg.appendChild(d)});
-  Object.keys(PLATS).forEach(function(k){var d=document.createElement('span');d.className='pchip on';d.dataset.k=k;d.innerHTML=PLATS[k].icon;d.title=PLATS[k].name;d.onclick=function(){d.classList.toggle('on')};pg.appendChild(d)});
+  Object.keys(CATS).forEach(function(k){var d=document.createElement('span');d.className='chip';d.dataset.k=k;d.innerHTML=CATS[k].icon+' '+CATS[k].name;d.onclick=function(){actCat=k;document.querySelectorAll('#cats .chip').forEach(function(c){c.classList.remove('on')});d.classList.add('on');saveSettings()};cg.appendChild(d)});
+  Object.keys(PLATS).forEach(function(k){var d=document.createElement('span');d.className='pchip on';d.dataset.k=k;d.innerHTML=PLATS[k].icon;d.title=PLATS[k].name;d.onclick=function(){d.classList.toggle('on');saveSettings()};pg.appendChild(d)});
 }
 init();updateWordRange();
 setInterval(function(){fetch('/api/health').then(function(){document.getElementById('svr').textContent='🟢'}).catch(function(){document.getElementById('svr').textContent='🔴'})},10000);
@@ -236,14 +243,20 @@ function doSearch(){var p=document.getElementById('sp');p.style.display=p.style.
 async function doGen(){
   var topic=document.getElementById('topic').value.trim();if(!topic){t('请输入主题','warn');return}
   var plats=getPlats();if(!plats.length){t('请选择平台','warn');return}
-  var wr=getWordRange();busyOn('🔬 调研...');st('调研中');doClr();showOut();
+  saveSettings();var wr=getWordRange();abortCtrl=new AbortController();
+  busyOn('🔬 调研...');st('调研中');doClr();showOut();
+  document.getElementById('btnGen').textContent='停止';document.getElementById('btnGen').onclick=stopGen;document.getElementById('btnGen').style.background='#EF4444';
+  t('目标字数: '+wr[0]+'-'+wr[1]+' 字','warn');
   try{
-    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,category:actCat,wordRange:wr})});
-    var d=await r.json();if(!d.success){t(d.error,'error');busyOff();return}
+    var r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,platforms:plats,category:actCat,wordRange:wr}),signal:abortCtrl.signal});
+    var d=await r.json();if(!d.success){t(d.error,'error');resetGenBtn();return}
     showResearch(d.research);showPlatforms(d.platforms,d.scores);st('完成 '+plats.length+'平台');t('已生成','ok');
-  }catch(e){t('错误','error')}
-  busyOff();
+  }catch(e){if(e.name!=='AbortError')t('错误','error')}
+  resetGenBtn();busyOff();
 }
+
+function resetGenBtn(){var b=document.getElementById('btnGen');b.textContent='生成';b.onclick=doGen;b.style.background='';}
+function stopGen(){if(abortCtrl){abortCtrl.abort();abortCtrl=null}t('已停止','warn');resetGenBtn();busyOff()}
 
 async function doHot(){var cat=actCat||'ai_special';busyOn('🔥 抓取');st('抓取中');doClr();showOut();
   try{var r=await fetch('/api/hot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:cat})});var d=await r.json();if(!d.success){t(d.error,'error');busyOff();return}
