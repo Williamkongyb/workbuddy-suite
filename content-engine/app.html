@@ -156,7 +156,14 @@ async function mineTopics(){
     document.getElementById('tr').innerHTML=topics.map(function(tp,i){return'<div class="card" style="cursor:pointer" onclick="useTopic(\''+tp.replace(/-/,'').replace(/'/g,'\\\'').trim()+'\')"><div style="font-size:10px;color:var(--ac);font-weight:600;margin-bottom:3px">#'+(i+1)+'</div><div style="font-size:12px">'+tp.replace(/^-/,'').trim()+'</div></div>'}).join('');
     t(topics.length+' topics','ok')}
 }
-function useTopic(tp){t('Selected: '+tp,'ok');go('tools')}
+function useTopic(tp){
+  go('tools');
+  setTimeout(function(){
+    var f=document.querySelector('#mcnt iframe');
+    if(f&&f.contentWindow)f.contentWindow.postMessage({type:'setTopic',value:tp},'*');
+  },500);
+  t('Topic sent to Toolbox','ok')
+}
 
 function renderCalendar(){
   var dates=[];for(var i=0;i<14;i++){var d=new Date();d.setDate(d.getDate()+i);dates.push(d.toLocaleDateString('zh-CN',{month:'short',day:'numeric',weekday:'short'}))}

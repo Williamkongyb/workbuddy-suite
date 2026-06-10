@@ -348,6 +348,9 @@ function doLogin(){
 checkAuth();
 function saveBrand(){var name=document.getElementById('brandName').value,style=document.getElementById('brandStyle').value;localStorage.setItem('synapse_brand',JSON.stringify({name:name,style:style}))}
 function loadBrand(){try{var b=JSON.parse(localStorage.getItem('synapse_brand')||'{}');if(b.name)document.getElementById('brandName').value=b.name;if(b.style)document.getElementById('brandStyle').value=b.style}catch(e){}}
+loadBrand();
+// Cross-app topic injection
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='setTopic'){document.getElementById('topic').value=e.data.value;t('选题已填入','ok')}});
 loadBrand();refreshPresets();
 
 // M1 品牌预设
