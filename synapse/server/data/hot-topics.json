@@ -1,0 +1,26 @@
+{
+  "version": "2026.1",
+  "last_updated": "2026-06-14",
+  "topics": [
+    { "word": "防晒霜推荐", "heat": 98000, "trend": "up", "category": "美妆护肤", "related_products": ["安耐晒", "理肤泉", "薇诺娜"] },
+    { "word": "一周减脂餐食谱", "heat": 87000, "trend": "up", "category": "美食烹饪", "related_products": ["燕麦", "鸡胸肉", "西兰花"] },
+    { "word": "养猫新手避坑", "heat": 76000, "trend": "stable", "category": "宠物生活", "related_products": ["猫砂", "猫粮", "猫抓板"] },
+    { "word": "卧室改造ins风", "heat": 72000, "trend": "up", "category": "家居生活", "related_products": ["床头灯", "衣柜收纳", "地毯"] },
+    { "word": "瑜伽入门教程", "heat": 68000, "trend": "up", "category": "健身运动", "related_products": ["瑜伽垫", "瑜伽砖", "拉伸带"] },
+    { "word": "AI写作工具测评", "heat": 65000, "trend": "up", "category": "AI工具", "related_products": ["Notion AI", "Copy.ai", "Jasper"] },
+    { "word": "夏日穿搭男", "heat": 63000, "trend": "up", "category": "服饰穿搭", "related_products": ["短袖衬衫", "运动短裤", "帆布鞋"] },
+    { "word": "职场穿搭女", "heat": 61000, "trend": "stable", "category": "服饰穿搭", "related_products": ["西装外套", "铅笔裤", "高跟鞋"] },
+    { "word": "婴儿辅食添加", "heat": 59000, "trend": "stable", "category": "母婴育儿", "related_products": ["米粉", "果泥", "辅食碗"] },
+    { "word": "雅思写作技巧", "heat": 57000, "trend": "up", "category": "教育培训", "related_products": ["写作模板", "词汇书", "在线课程"] },
+    { "word": "微信视频号运营", "heat": 55000, "trend": "up", "category": "自媒体", "related_products": ["三脚架", "补光灯", "麦克风"] },
+    { "word": "平价护肤品推荐", "heat": 53000, "trend": "stable", "category": "美妆护肤", "related_products": ["洗面奶", "爽肤水", "面霜"] },
+    { "word": "家庭影院搭建", "heat": 51000, "trend": "up", "category": "数码家电", "related_products": ["投影仪", "音响", "幕布"] },
+    { "word": "周末露营装备", "heat": 49000, "trend": "up", "category": "户外运动", "related_products": ["帐篷", "睡袋", "折叠椅"] },
+    { "word": "高考志愿填报", "heat": 47000, "trend": "up", "category": "教育培训", "related_products": ["志愿指南", "在线咨询", "测评工具"] },
+    { "word": "电动车保养", "heat": 45000, "trend": "stable", "category": "汽车出行", "related_products": ["充电器", "头盔", "防盗锁"] },
+    { "word": "小户型收纳", "heat": 43000, "trend": "up", "category": "家居生活", "related_products": ["收纳盒", "真空袋", "置物架"] },
+    { "word": "自制冰饮", "heat": 41000, "trend": "up", "category": "美食烹饪", "related_products": ["气泡水", "水果茶", "冰格"] },
+    { "word": "宠物猫粮测评", "heat": 39000, "trend": "stable", "category": "宠物生活", "related_products": ["皇家", "渴望", "爱肯拿"] },
+    { "word": "夏季床品推荐", "heat": 37000, "trend": "up", "category": "家居生活", "related_products": ["凉席", "夏被", "蚊帐"] }
+  ]
+}
