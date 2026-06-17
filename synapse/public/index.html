@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse灵枢 v2.3 — AI内容创作引擎 | Brand Brain · 改写 · 去AI味</title>
+<style>
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface2: #fafafa;
+  --text: #1d1d1f;
+  --text2: #86868b;
+  --text3: #aeaeb2;
+  --accent: #5e5ce6;
+  --accent2: #34c759;
+  --warn: #ff9f0a;
+  --danger: #ff3b30;
+  --border: rgba(0,0,0,0.06);
+  --border2: rgba(0,0,0,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.06);
+  --sidebar-w: 64px;
+  --inspector-w: 280px;
+}
+body.dark{
+  --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #141428;
+  --text: #e8e8f0; --text2: #8888a0; --text3: #606080;
+  --accent: #7c7af0; --accent2: #4ade80; --warn: #fbbf24; --danger: #f87171;
+  --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.1);
+  --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-lg: 0 4px 24px rgba(0,0,0,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh; font-size:14px; line-height:1.5;
+}
+/* === Topbar === */
+.topbar{
+  height:48px; background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 16px; position:sticky; top:0; z-index:100;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+}
+.logo{font-size:16px; font-weight:700; color:var(--accent); letter-spacing:-0.5px; display:flex; align-items:center; gap:8px;}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);}
+.logo-sub{color:var(--text2);font-weight:400;font-size:11px;margin-left:4px;}
+.topbar-spacer{flex:1;}
+.topbar-actions{display:flex;align-items:center;gap:12px;}
+.topbar-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 12px;font-size:12px;cursor:pointer;color:var(--text2);transition:all 0.2s;}
+.topbar-btn:hover{background:var(--surface2);color:var(--text);}
+.topbar-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.brand-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--surface2);border-radius:20px;font-size:11px;color:var(--text2);border:1px solid var(--border);}
+
+/* === Layout === */
+.layout{display:flex;min-height:calc(100vh - 48px);}
+/* Sidebar */
+.sidebar{
+  width:var(--sidebar-w); background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; padding:12px 0; gap:4px;
+  position:sticky; top:48px; height:calc(100vh - 48px); z-index:50;
+}
+.sidebar-item{
+  width:44px; height:44px; border-radius:var(--radius-sm); display:flex;
+  align-items:center; justify-content:center; font-size:18px; cursor:pointer;
+  transition:all 0.15s; color:var(--text2); position:relative; border:none; background:none;
+}
+.sidebar-item:hover{background:var(--surface2); color:var(--text);}
+.sidebar-item.active{background:rgba(94,92,230,0.1); color:var(--accent);}
+.sidebar-item .tooltip{
+  position:absolute; left:56px; top:50%; transform:translateY(-50%);
+  background:var(--text); color:var(--bg); font-size:11px; padding:4px 10px; border-radius:6px;
+  white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.15s;
+}
+.sidebar-item:hover .tooltip{opacity:1;}
+.sidebar-divider{width:28px;height:1px;background:var(--border);margin:8px 0;}
+.sidebar-spacer{flex:1;}
+
+/* Main Area */
+.main{flex:1; overflow-y:auto; padding:20px; max-width:calc(100vw - var(--sidebar-w) - var(--inspector-w));}
+.main-header{margin-bottom:20px;}
+.main-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.main-subtitle{font-size:12px;color:var(--text2);}
+
+/* Input Card */
+.input-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px; margin-bottom:16px; box-shadow:var(--shadow);
+}
+.input-row{display:flex;gap:10px;margin-bottom:10px;align-items:center;}
+.input-row:last-child{margin-bottom:0;}
+input, textarea, select{
+  padding:9px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);
+  font-size:13px; font-family:inherit; background:var(--surface2); color:var(--text);
+  outline:none; transition:border 0.2s; resize:vertical;
+}
+input:focus, textarea:focus, select:focus{border-color:var(--accent);}
+textarea{min-height:80px; width:100%;}
+input[type="text"]{flex:1; min-width:0;}
+
+/* Buttons */
+.btn{
+  padding:8px 16px; border:none; border-radius:var(--radius-sm); font-size:13px;
+  font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.btn-primary{background:var(--accent); color:#fff;}
+.btn-primary:hover{opacity:0.9; transform:translateY(-1px);}
+.btn-accent{background:var(--accent2); color:#fff;}
+.btn-accent:hover{opacity:0.9;}
+.btn-ghost{background:transparent; color:var(--text2); border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--surface2); color:var(--text);}
+.btn-sm{padding:4px 10px; font-size:11px; border-radius:6px;}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:8px;}
+
+/* Results */
+.result-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px; margin-bottom:12px; box-shadow:var(--shadow);
+}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.result-title{font-weight:600;font-size:14px;}
+.result-body{line-height:1.8;font-size:13px;white-space:pre-wrap;}
+.result-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.tag{padding:3px 10px;background:rgba(94,92,230,0.08);border-radius:20px;font-size:11px;color:var(--accent);}
+.tag-warn{background:rgba(255,159,10,0.1);color:var(--warn);}
+.tag-ok{background:rgba(52,199,89,0.1);color:var(--accent2);}
+.result-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+
+/* Inspector (right panel) */
+.inspector{
+  width:var(--inspector-w); background:var(--surface); border-left:1px solid var(--border);
+  padding:16px; overflow-y:auto; position:sticky; top:48px; height:calc(100vh - 48px);
+}
+.inspector-section{margin-bottom:16px;}
+.inspector-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:1px;margin-bottom:8px;}
+.inspector-card{
+  background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:12px; margin-bottom:8px;
+}
+.inspector-card .title{font-size:12px;font-weight:600;margin-bottom:4px;}
+.inspector-card .value{font-size:20px;font-weight:700;}
+.inspector-card .sub{font-size:11px;color:var(--text2);}
+.score-ring{
+  width:48px;height:48px;border-radius:50%;border:3px solid;
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;
+}
+.hot-item{
+  padding:6px 0;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;transition:color 0.15s;
+}
+.hot-item:hover{color:var(--accent);}
+.hot-item:last-child{border-bottom:none;}
+.hot-rank{font-weight:700;color:var(--accent);min-width:20px;}
+
+/* Panels (hidden by default, shown by sidebar selection) */
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* Toast */
+.toast{
+  position:fixed; bottom:20px; right:20px; padding:12px 20px; border-radius:var(--radius-sm);
+  color:#fff; font-size:13px; font-weight:600; z-index:1000; transition:all 0.3s;
+  opacity:0; transform:translateY(10px);
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--accent2);}
+.toast.error{background:var(--danger);}
+
+/* Benchmark bar */
+.bench-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;}
+.bench-bar{flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden;}
+.bench-fill{height:100%;border-radius:3px;transition:width 0.5s;}
+
+/* Spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* Responsive */
+@media(max-width:1024px){.inspector{display:none;}}
+@media(max-width:768px){.sidebar{width:48px;}.sidebar-item{width:36px;height:36px;font-size:15px;}.main{max-width:100vw;}}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<nav class="topbar">
+  <div class="logo"><div class="logo-dot"></div>Synapse<span class="logo-sub">灵枢 v2.3</span></div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-actions">
+    <div class="brand-chip" id="brandChip" style="display:none;" onclick="switchMode('settings')">
+      🧠 <span id="brandChipName"></span>
+    </div>
+    <button class="topbar-btn" onclick="toggleDark()" id="darkBtn">🌙</button>
+    <span style="font-size:11px;color:var(--text2);" id="onlineStatus">🟢 在线</span>
+  </div>
+</nav>
+
+<!-- Layout -->
+<div class="layout">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <button class="sidebar-item active" onclick="switchMode('create')" data-mode="create" title="创作">
+    ✍️<span class="tooltip">AI创作</span>
+  </button>
+  <button class="sidebar-item" onclick="switchMode('optimize')" data-mode="optimize" title="优化">
+    ✨<span class="tooltip">改写优化</span>
+  </button>
+  <button class="sidebar-item" onclick="switchMode('compliance')" data-mode="compliance" title="合规">
+    🛡️<span class="tooltip">合规检测</span>
+  </button>
+  <button class="sidebar-item" onclick="switchMode('schedule')" data-mode="schedule" title="排期">
+    📅<span class="tooltip">内容排期</span>
+  </button>
+  <div class="sidebar-divider"></div>
+  <button class="sidebar-item" onclick="switchMode('benchmark')" data-mode="benchmark" title="对标">
+    📊<span class="tooltip">爆款对标</span>
+  </button>
+  <button class="sidebar-item" onclick="switchMode('hot')" data-mode="hot" title="热点">
+    🔥<span class="tooltip">实时热点</span>
+  </button>
+  <div class="sidebar-spacer"></div>
+  <button class="sidebar-item" onclick="switchMode('settings')" data-mode="settings" title="设置">
+    ⚙️<span class="tooltip">品牌设置</span>
+  </button>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- ========== CREATE PANEL ========== -->
+  <div class="panel active" id="panel-create">
+    <div class="main-header">
+      <div class="main-title">✍️ AI内容创作</div>
+      <div class="main-subtitle">选择平台和风格，一键生成爆款文案 · 支持12平台 · DeepSeek驱动</div>
+    </div>
+    <div class="input-card">
+      <div class="input-row">
+        <input type="text" id="genTopic" placeholder="输入创作主题，如：夏季防晒推荐 / 一周减脂餐 / 养猫新手避坑...">
+        <select id="genPlatform" style="width:140px;">
+          <option value="xiaohongshu">📕 小红书</option>
+          <option value="zhihu">🔵 知乎</option>
+          <option value="wechat">💬 公众号</option>
+          <option value="douyin">🎵 抖音</option>
+          <option value="bilibili">📺 B站</option>
+          <option value="toutiao">📰 头条</option>
+        </select>
+        <select id="genCount" style="width:80px;">
+          <option value="1">1篇</option><option value="2">2篇</option><option value="3">3篇</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <button class="btn btn-primary" onclick="doGenerate()">🚀 开始生成</button>
+        <button class="btn btn-accent" onclick="doGenerateBenchmark()">📊 生成+对标</button>
+        <span style="font-size:11px;color:var(--text2);margin-left:auto;">AI自动检测品类 · 品牌语调自动注入</span>
+      </div>
+    </div>
+    <div id="createResult"></div>
+  </div>
+
+  <!-- ========== OPTIMIZE PANEL ========== -->
+  <div class="panel" id="panel-optimize">
+    <div class="main-header">
+      <div class="main-title">✨ 改写优化</div>
+      <div class="main-subtitle">改写风格 · 润色网感 · 去AI味 · 降重规避</div>
+    </div>
+    <div class="input-card">
+      <textarea id="optContent" placeholder="粘贴需要优化的文案内容..." rows="4"></textarea>
+      <div class="input-row">
+        <select id="optMode" style="flex:1;">
+          <option value="rewrite">🔄 改写 — 生成3种风格变体</option>
+          <option value="polish">💎 润色 — 优化流畅度+网感</option>
+          <option value="dedup">🔀 降重 — 同义替换规避查重</option>
+          <option value="humanize">👤 去AI味 — 像真人写的</option>
+        </select>
+        <select id="optPlatform" style="width:140px;">
+          <option value="xiaohongshu">📕 小红书</option>
+          <option value="zhihu">🔵 知乎</option>
+          <option value="wechat">💬 公众号</option>
+          <option value="douyin">🎵 抖音</option>
+          <option value="bilibili">📺 B站</option>
+        </select>
+      </div>
+      <div class="input-row" id="humanizeOpts" style="display:none;">
+        <select id="humanizeIntensity" style="flex:1;">
+          <option value="light">轻度 — 修掉AI套话</option>
+          <option value="medium" selected>中度 — 朋友聊天感</option>
+          <option value="heavy">重度 — 深度改写+不完美真实感</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <button class="btn btn-primary" id="optMainBtn" onclick="doOptimize()">✨ 开始优化</button>
+        <button class="btn btn-ghost" id="optDetectBtn" style="display:none;" onclick="doDetectAI()">🔍 先检测AI味</button>
+      </div>
+    </div>
+    <div id="optimizeResult"></div>
+  </div>
+
+  <!-- ========== COMPLIANCE PANEL ========== -->
+  <div class="panel" id="panel-compliance">
+    <div class="main-header">
+      <div class="main-title">🛡️ 合规检测</div>
+      <div class="main-subtitle">500+违禁词库 · AI语义检测 · 多平台规则 · 变体写法识别</div>
+    </div>
+    <div class="input-card">
+      <textarea id="compContent" placeholder="粘贴待检测的文案..." rows="5"></textarea>
+      <div class="input-row">
+        <select id="compPlatform" style="flex:1;">
+          <option value="">全部平台规则</option>
+          <option value="xiaohongshu">📕 小红书</option>
+          <option value="douyin">🎵 抖音</option>
+          <option value="zhihu">🔵 知乎</option>
+          <option value="wechat">💬 公众号</option>
+          <option value="bilibili">📺 B站</option>
+        </select>
+        <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;white-space:nowrap;">
+          <input type="checkbox" id="compAI" checked> AI深度检测
+        </label>
+        <button class="btn btn-primary" onclick="doComplianceCheck()">🔍 检测</button>
+      </div>
+    </div>
+    <div id="compResult"></div>
+  </div>
+
+  <!-- ========== SCHEDULE PANEL ========== -->
+  <div class="panel" id="panel-schedule">
+    <div class="main-header">
+      <div class="main-title">📅 内容排期</div>
+      <div class="main-subtitle">草稿管理 · 定时发布 · 多平台队列 · 发布统计</div>
+    </div>
+    <div class="input-card">
+      <input type="text" id="schedTitle" placeholder="内容标题" style="margin-bottom:8px;">
+      <textarea id="schedBody" placeholder="正文内容..." rows="3" style="margin-bottom:8px;"></textarea>
+      <div class="input-row">
+        <select id="schedPlatform" style="flex:1;">
+          <option value="xiaohongshu">📕 小红书</option>
+          <option value="zhihu">🔵 知乎</option>
+          <option value="wechat">💬 公众号</option>
+          <option value="douyin">🎵 抖音</option>
+          <option value="bilibili">📺 B站</option>
+        </select>
+        <input type="datetime-local" id="schedTime" style="flex:1;">
+        <input type="text" id="schedTags" placeholder="标签" style="flex:1;">
+      </div>
+      <div class="input-row">
+        <button class="btn btn-ghost" onclick="saveDraft()">💾 草稿</button>
+        <button class="btn btn-primary" onclick="addSchedule()">📅 排期</button>
+        <button class="btn btn-accent" onclick="loadSchedule()">📋 查看队列</button>
+      </div>
+    </div>
+    <div id="scheduleResult"></div>
+  </div>
+
+  <!-- ========== BENCHMARK PANEL ========== -->
+  <div class="panel" id="panel-benchmark">
+    <div class="main-header">
+      <div class="main-title">📊 爆款对标</div>
+      <div class="main-subtitle">你的内容 vs 平台爆款 · AI评分 · 改进建议</div>
+    </div>
+    <div class="input-card">
+      <input type="text" id="benchTitle" placeholder="粘贴你的标题..." style="margin-bottom:8px;">
+      <textarea id="benchBody" placeholder="粘贴正文（可选）..." rows="3"></textarea>
+      <div class="input-row">
+        <button class="btn btn-primary" onclick="doBenchmark()">📊 对标分析</button>
+        <button class="btn btn-ghost" onclick="loadTopPosts()">🏆 查看爆款</button>
+      </div>
+    </div>
+    <div id="benchResult"></div>
+    <div id="benchTopPosts" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- ========== HOT PANEL ========== -->
+  <div class="panel" id="panel-hot">
+    <div class="main-header">
+      <div class="main-title">🔥 实时热点</div>
+      <div class="main-subtitle">聚合微博·知乎·抖音热搜 · 点击热词直接创作</div>
+    </div>
+    <div class="input-card">
+      <div class="input-row">
+        <button class="btn btn-accent" onclick="loadHotTopics()">🔄 刷新热点</button>
+        <button class="btn btn-ghost" onclick="refreshHotTopics()">🌐 实时抓取</button>
+      </div>
+    </div>
+    <div id="hotTopicsFull"></div>
+  </div>
+
+  <!-- ========== SETTINGS PANEL ========== -->
+  <div class="panel" id="panel-settings">
+    <div class="main-header">
+      <div class="main-title">⚙️ Brand Brain 品牌记忆</div>
+      <div class="main-subtitle">配置品牌信息 → AI自动注入风格 · 对标 Jasper Brand Voice</div>
+    </div>
+    <div class="input-card">
+      <div class="input-row">
+        <input type="text" id="brandName" placeholder="品牌名称" style="flex:1;">
+        <input type="text" id="brandSlogan" placeholder="品牌标语" style="flex:1;">
+      </div>
+      <div class="input-row">
+        <input type="text" id="brandPersonality" placeholder="人格标签: 专业, 亲和, 幽默" style="flex:1;">
+        <input type="text" id="brandAudience" placeholder="目标受众" style="flex:1;">
+      </div>
+      <textarea id="brandSamples" placeholder="上传品牌范文·每行一篇（3-5篇即可提取语调特征）" rows="3" style="margin-bottom:8px;"></textarea>
+      <div class="input-row">
+        <button class="btn btn-primary" onclick="saveBrand()">💾 保存品牌</button>
+        <button class="btn btn-accent" onclick="analyzeBrandTone()">🔬 AI分析语调</button>
+      </div>
+      <div id="brandResult" style="margin-top:10px;display:none;"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Inspector (Right Panel) -->
+<aside class="inspector" id="inspector">
+  <div class="inspector-section">
+    <div class="inspector-label">Brand Brain</div>
+    <div class="inspector-card">
+      <div class="title" id="inspBrandName">未配置品牌</div>
+      <div class="sub" id="inspBrandTone">点击 ⚙️ 设置品牌信息</div>
+    </div>
+  </div>
+  <div class="inspector-section">
+    <div class="inspector-label">AI味检测</div>
+    <div class="inspector-card" style="display:flex;align-items:center;gap:12px;">
+      <div class="score-ring" id="inspAiRing" style="border-color:var(--border2);">-</div>
+      <div>
+        <div class="title" id="inspAiLabel">选择文案后检测</div>
+        <div class="sub" id="inspAiDetail"></div>
+      </div>
+    </div>
+  </div>
+  <div class="inspector-section">
+    <div class="inspector-label">合规状态</div>
+    <div class="inspector-card">
+      <div class="title" id="inspCompStatus">未检测</div>
+      <div class="sub" id="inspCompDetail">粘贴文案到合规面板</div>
+    </div>
+  </div>
+  <div class="inspector-section">
+    <div class="inspector-label">实时热点</div>
+    <div id="inspHotTopics"><div class="sub">加载中...</div></div>
+  </div>
+  <div class="inspector-section">
+    <div class="inspector-label">排期概览</div>
+    <div class="inspector-card">
+      <div class="title" id="inspSchedPending">-</div>
+      <div class="sub">待发布</div>
+    </div>
+  </div>
+</aside>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+let currentMode = 'create';
+
+// === Init ===
+(async function init(){
+  await checkHealth();
+  await loadBrand();
+  await loadInspectorHotTopics();
+  await loadInspectorSchedule();
+  if(localStorage.getItem('synapse-dark')==='1'){ document.body.classList.add('dark'); document.getElementById('darkBtn').textContent='☀️'; }
+})();
+
+async function checkHealth(){
+  try{
+    const r = await fetch(API+'/health');
+    const d = await r.json();
+    document.getElementById('onlineStatus').textContent = d.status==='ok'?'🟢 在线':'⚠️ 离线';
+  }catch(e){ document.getElementById('onlineStatus').textContent='🔴 离线'; }
+}
+
+// === Mode Switching ===
+function switchMode(mode){
+  currentMode = mode;
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+  document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const panel = document.getElementById('panel-'+mode);
+  if(panel) panel.classList.add('active');
+  // Load data for specific panels
+  if(mode==='hot') loadHotTopics();
+  if(mode==='benchmark') loadTopPosts();
+  if(mode==='schedule') loadSchedule();
+}
+
+// === Toast ===
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// === Sidebar optimize mode listener ===
+document.getElementById('optMode').addEventListener('change', function(){
+  const isHumanize = this.value === 'humanize';
+  document.getElementById('humanizeOpts').style.display = isHumanize?'flex':'none';
+  document.getElementById('optDetectBtn').style.display = isHumanize?'inline-flex':'none';
+  document.getElementById('optMainBtn').textContent = isHumanize?'👤 去AI味改写':'✨ 开始优化';
+});
+
+// ==================== CREATE ====================
+async function doGenerate(){
+  const topic = document.getElementById('genTopic').value.trim();
+  if(!topic) return showToast('请输入创作主题', 'error');
+  const platform = document.getElementById('genPlatform').value;
+  const count = parseInt(document.getElementById('genCount').value);
+  const area = document.getElementById('createResult');
+  area.innerHTML = '<div class="result-card"><div class="spinner"></div> 生成中...</div>';
+
+  try{
+    const r = await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,platform,count})});
+    const d = await r.json();
+    if(d.error){ area.innerHTML='<div class="result-card">❌ '+d.error+'</div>'; return; }
+
+    area.innerHTML = (d.posts||[]).map((p,i)=>`
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-title">📝 #${i+1} ${escHtml(p.title)}</div>
+          <span class="tag">${p.industry||d.generation_info?.industry||''}</span>
+        </div>
+        <div class="result-body">${escHtml(p.body||'')}</div>
+        ${(p.hashtags||[]).length?`<div class="result-tags">${p.hashtags.map(h=>'<span class="tag">'+escHtml(h)+'</span>').join('')}</div>`:''}
+        <div class="result-actions">
+          <button class="btn btn-ghost btn-sm" onclick="copyText(\`${escHtml(p.body||'').replace(/`/g,'\\`')}\`)">📋 复制</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendToOptimize(\`${escHtml((p.body||'').slice(0,500)).replace(/`/g,'\\`')}\`)">✨ 优化</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendToCompliance(\`${escHtml((p.body||'').slice(0,500)).replace(/`/g,'\\`')}\`)">🛡️ 合规</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendToSchedule('${escHtml(p.title).replace(/'/g,"\\'")}','${escHtml((p.body||'').slice(0,300)).replace(/'/g,"\\'")}', '${platform}')">📅 排期</button>
+        </div>
+      </div>
+    `).join('');
+    // Update inspector
+    const text = (d.posts||[])[0]?.body||'';
+    if(text) updateInspectorAI(text);
+  }catch(e){ area.innerHTML='<div class="result-card">❌ 失败: '+e.message+'</div>'; }
+}
+
+async function doGenerateBenchmark(){
+  const topic = document.getElementById('genTopic').value.trim();
+  if(!topic) return showToast('请输入创作主题', 'error');
+  const platform = document.getElementById('genPlatform').value;
+  const count = parseInt(document.getElementById('genCount').value);
+  const area = document.getElementById('createResult');
+  area.innerHTML = '<div class="result-card"><div class="spinner"></div> 生成+对标中...</div>';
+
+  try{
+    const r = await fetch(API+'/generate/benchmark',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,platform,count})});
+    const d = await r.json();
+    if(d.error){ area.innerHTML='<div class="result-card">❌ '+d.error+'</div>'; return; }
+
+    const summary = d.benchmark_summary||{};
+    area.innerHTML = `
+      <div class="result-card" style="text-align:center;background:rgba(94,92,230,0.04);">
+        <div style="display:flex;justify-content:center;gap:32px;">
+          <div><div style="font-size:28px;font-weight:800;color:var(--accent);">${summary.avg_original_score||0}</div><div style="font-size:11px;color:var(--text2);">原创评分</div></div>
+          <div><div style="font-size:28px;font-weight:800;color:var(--text2);">${summary.avg_benchmark_score||0}</div><div style="font-size:11px;color:var(--text2);">爆款基准</div></div>
+          <div><div style="font-size:28px;font-weight:800;color:${(summary.qualified_count||0)>0?'var(--accent2)':'var(--warn)'};">${summary.qualified_count||0}/${summary.total_count||0}</div><div style="font-size:11px;color:var(--text2);">达标篇数</div></div>
+        </div>
+      </div>
+    ` + (d.posts||[]).map((p,i)=>{
+      const bm = p.benchmark||{};
+      return `<div class="result-card">
+        <div class="result-header"><div class="result-title">#${i+1} ${escHtml(p.title)}</div><span class="tag ${bm.original_score>=bm.benchmark_avg_score*0.7?'tag-ok':'tag-warn'}">评分${bm.original_score||0}/${bm.benchmark_avg_score||0} ${bm.verdict||''}</span></div>
+        <div class="result-body">${escHtml((p.body||'').slice(0,300))}${(p.body||'').length>300?'...':''}</div>
+        ${(bm.improvements||[]).length?`<div style="margin-top:8px;padding:8px;background:rgba(255,159,10,0.06);border-radius:8px;font-size:12px;"><strong>💡 改进建议:</strong>${bm.improvements.map(imp=>'<div>• '+escHtml(imp)+'</div>').join('')}</div>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){ area.innerHTML='<div class="result-card">❌ 失败: '+e.message+'</div>'; }
+}
+
+// ==================== OPTIMIZE ====================
+async function doOptimize(){
+  const content = document.getElementById('optContent').value.trim();
+  if(!content) return showToast('请粘贴需要优化的内容', 'error');
+  const mode = document.getElementById('optMode').value;
+  const platform = document.getElementById('optPlatform').value;
+  const area = document.getElementById('optimizeResult');
+  area.innerHTML = '<div class="result-card"><div class="spinner"></div> 优化中...</div>';
+
+  try{
+    let url, body;
+    if(mode==='humanize'){
+      url = API+'/humanize';
+      body = { content, intensity: document.getElementById('humanizeIntensity').value, platform };
+    } else {
+      url = API+'/rewrite';
+      body = { content, mode, platform };
+    }
+    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    if(d.error){ area.innerHTML='<div class="result-card">❌ '+d.error+'</div>'; return; }
+
+    if(d.mode==='humanize'){
+      const hz = d.humanized||{};
+      area.innerHTML = `
+        <div class="result-card" style="text-align:center;">
+          <div style="display:flex;justify-content:center;gap:24px;align-items:center;">
+            <div><div style="font-size:28px;font-weight:800;color:var(--warn);">${d.original_ai_score}</div><div style="font-size:11px;">改写前AI味</div></div>
+            <div style="font-size:20px;">→</div>
+            <div><div style="font-size:28px;font-weight:800;color:var(--accent2);">${d.new_ai_score}</div><div style="font-size:11px;">改写后AI味</div></div>
+            <div><span class="tag tag-ok">-${d.improvement} 改善</span></div>
+          </div>
+        </div>
+        <div class="result-card">
+          ${hz.title?`<div style="font-weight:700;margin-bottom:8px;">📌 ${escHtml(hz.title)}</div>`:''}
+          <div class="result-body">${escHtml(hz.body||'')}</div>
+        </div>`;
+      updateInspectorAI(hz.body||'');
+    } else if(d.mode==='rewrite'){
+      area.innerHTML = '<div style="font-weight:600;margin-bottom:12px;">🔄 3种风格变体</div>' + (d.variants||[]).map((v,i)=>`
+        <div class="result-card">
+          <div style="font-weight:600;margin-bottom:8px;color:var(--accent);">风格${i+1}: ${v.style}</div>
+          ${v.title?`<div style="font-weight:700;margin-bottom:6px;">📌 ${escHtml(v.title)}</div>`:''}
+          <div class="result-body">${escHtml(v.body||'')}</div>
+        </div>`).join('');
+    } else if(d.mode==='polish'){
+      const p = d.polished||{};
+      area.innerHTML = `<div class="result-card"><div style="font-weight:600;margin-bottom:8px;">💎 润色结果</div>${p.title?`<div style="font-weight:700;margin-bottom:6px;">${escHtml(p.title)}</div>`:''}<div class="result-body">${escHtml(p.body||'')}</div>${p.changes_summary?`<div style="margin-top:8px;font-size:12px;color:var(--text2);">📝 ${escHtml(p.changes_summary)}</div>`:''}</div>`;
+    } else if(d.mode==='dedup'){
+      const dp = d.deduped||{};
+      area.innerHTML = `<div class="result-card"><div style="font-weight:600;margin-bottom:8px;">🔀 降重结果 <span class="tag">降重率 ${dp.dedup_ratio||'未知'}</span></div>${dp.title?`<div style="font-weight:700;">${escHtml(dp.title)}</div>`:''}<div class="result-body">${escHtml(dp.body||'')}</div></div>`;
+    }
+  }catch(e){ area.innerHTML='<div class="result-card">❌ 失败: '+e.message+'</div>'; }
+}
+
+async function doDetectAI(){
+  const content = document.getElementById('optContent').value.trim();
+  if(!content) return showToast('请粘贴需要检测的内容', 'error');
+  const d = await (await fetch(API+'/detect-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content})})).json();
+  updateInspectorAI(content);
+  showToast(`AI味评分: ${d.score} — ${d.level}`);
+}
+
+// ==================== COMPLIANCE ====================
+async function doComplianceCheck(){
+  const content = document.getElementById('compContent').value.trim();
+  if(!content) return showToast('请粘贴待检测的文案', 'error');
+  const platform = document.getElementById('compPlatform').value || undefined;
+  const enable_ai = document.getElementById('compAI').checked;
+  const area = document.getElementById('compResult');
+  area.innerHTML = '<div class="result-card"><div class="spinner"></div> 检测中...</div>';
+
+  try{
+    const r = await fetch(API+'/compliance/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,platform,enable_ai})});
+    const d = await r.json();
+    const color = d.passed?'var(--accent2)':'var(--danger)';
+    area.innerHTML = `
+      <div class="result-card" style="text-align:center;">
+        <div style="font-size:48px;font-weight:800;color:${color};">${d.score}</div>
+        <div style="font-size:16px;font-weight:600;">${d.passed?'✅ 合规通过':'⚠️ 存在违规'}</div>
+        <div style="font-size:12px;color:var(--text2);">风险等级: ${d.risk_level} | 违规项: ${d.total_violations}</div>
+      </div>
+      ${d.all_violations.length?`<div class="result-card"><div style="font-weight:600;margin-bottom:8px;">🚫 违规明细</div>${d.all_violations.map(v=>`<div style="padding:4px 0;font-size:13px;">• <span style="color:var(--danger);">${escHtml(v.word)}</span> — ${v.description||v.reason||''} <span class="tag tag-warn">${v.detection_method||''}</span></div>`).join('')}</div>`:''}
+      ${d.suggestions.length?`<div class="result-card"><div style="font-weight:600;margin-bottom:8px;">💡 修改建议</div>${d.suggestions.map(s=>`<div style="font-size:12px;padding:2px 0;">• ${escHtml(s)}</div>`).join('')}</div>`:''}
+    `;
+    document.getElementById('inspCompStatus').textContent = d.passed?'✅ 合规通过':'⚠️ 存在违规';
+    document.getElementById('inspCompDetail').textContent = `评分 ${d.score}/100 · 违规 ${d.total_violations}项`;
+  }catch(e){ area.innerHTML='<div class="result-card">❌ 失败: '+e.message+'</div>'; }
+}
+
+// ==================== SCHEDULE ====================
+async function saveDraft(){
+  const title=document.getElementById('schedTitle').value.trim(),body=document.getElementById('schedBody').value.trim();
+  if(!title) return showToast('请输入标题','error');
+  const r=await fetch(API+'/schedule/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,body,platform:document.getElementById('schedPlatform').value,hashtags:document.getElementById('schedTags').value.split(',').map(s=>s.trim()).filter(Boolean)})});
+  await r.json(); showToast('草稿已保存'); loadSchedule();
+}
+async function addSchedule(){
+  const title=document.getElementById('schedTitle').value.trim();
+  if(!title) return showToast('请输入标题','error');
+  const time=document.getElementById('schedTime').value;
+  if(!time) return showToast('请选择发布时间','error');
+  const r=await fetch(API+'/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,body:document.getElementById('schedBody').value.trim(),platform:document.getElementById('schedPlatform').value,hashtags:document.getElementById('schedTags').value.split(',').map(s=>s.trim()).filter(Boolean),scheduled_at:new Date(time).toISOString()})});
+  await r.json(); showToast('排期已添加'); loadSchedule(); loadInspectorSchedule();
+}
+async function loadSchedule(){
+  const area=document.getElementById('scheduleResult');
+  try{
+    const r=await fetch(API+'/schedule/queue');const d=await r.json();
+    if(!d.items.length){area.innerHTML='<div class="result-card" style="text-align:center;color:var(--text2);">暂无排期，添加一条吧</div>';return;}
+    area.innerHTML=`<div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--text2);"><span>📝草稿:${d.stats?.active_drafts||0}</span><span>📅排期:${d.stats?.pending||0}</span><span>✅已发布:${d.stats?.published||0}</span><span>⚠️逾期:${d.stats?.overdue||0}</span></div>`+d.items.map(item=>`
+      <div class="result-card" style="border-left:3px solid ${item.status==='published'?'var(--accent2)':'var(--accent)'};">
+        <div style="display:flex;justify-content:space-between;"><div><div style="font-weight:600;">${escHtml(item.title)}</div><div style="font-size:11px;color:var(--text2);">${platformIcon(item.platform)} ${item.platform} · ${new Date(item.scheduled_at).toLocaleString('zh-CN')}</div></div>
+        ${item.status==='pending'?`<div style="display:flex;gap:4px;"><button class="btn btn-accent btn-sm" onclick="markPublished('${item.id}')">✅</button><button class="btn btn-ghost btn-sm" onclick="cancelSchedule('${item.id}')">✕</button></div>`:''}
+        </div></div>`).join('');
+  }catch(e){area.innerHTML='<div class="result-card">❌ 加载失败</div>';}
+}
+async function cancelSchedule(id){await fetch(API+'/schedule/'+id,{method:'DELETE'});loadSchedule();loadInspectorSchedule();}
+async function markPublished(id){await fetch(API+'/schedule/'+id+'/publish',{method:'POST'});loadSchedule();loadInspectorSchedule();}
+
+// ==================== BENCHMARK ====================
+async function doBenchmark(){
+  const title=document.getElementById('benchTitle').value.trim();
+  if(!title) return showToast('请输入标题','error');
+  const area=document.getElementById('benchResult');
+  area.innerHTML='<div class="result-card"><div class="spinner"></div> 对标中...</div>';
+  try{
+    const r=await fetch(API+'/analyze/benchmark',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title})});
+    const d=await r.json();
+    area.innerHTML=`
+      <div class="result-card" style="text-align:center;">
+        <div style="font-size:48px;font-weight:800;color:var(--accent);">${d.original_score} <span style="font-size:14px;color:var(--text2);">/ ${d.benchmark_avg_score}</span></div>
+        <div style="font-weight:600;">${d.verdict||''}</div>
+      </div>
+      ${(d.benchmarks||[]).map(b=>`<div class="bench-row"><span style="flex:1;font-size:12px;">${escHtml((b.title||'').slice(0,20))}...</span><div class="bench-bar"><div class="bench-fill" style="width:${b.score}%;background:var(--accent);"></div></div><span style="font-weight:600;">${b.score}</span><span style="color:var(--text2);">${b.gap>0?'+'+b.gap:b.gap}</span></div>`).join('')}
+    `;
+  }catch(e){area.innerHTML='<div class="result-card">❌ 失败: '+e.message+'</div>';}
+}
+async function loadTopPosts(){
+  const area=document.getElementById('benchTopPosts');
+  try{
+    const r=await fetch(API+'/collect/top?limit=5');const d=await r.json();
+    area.innerHTML='<div style="font-weight:600;margin-bottom:8px;">🏆 Top5 爆款</div>'+d.posts.map(p=>`<div class="result-card" style="font-size:12px;"><strong>${escHtml(p.title)}</strong><div style="color:var(--text2);margin-top:2px;">${platformIcon(p.platform)} ⭐${fmtNum(p.likes||0)} 📌${fmtNum(p.collects||0)}</div></div>`).join('');
+  }catch(e){}
+}
+
+// ==================== HOT TOPICS ====================
+async function loadHotTopics(){
+  const area=document.getElementById('hotTopicsFull');
+  try{
+    const r=await fetch(API+'/hot-topics?limit=20');const d=await r.json();
+    area.innerHTML=d.topics.map((t,i)=>`<div class="result-card" style="cursor:pointer;" onclick="fillTopic('${escHtml(t.word||t.title||'')}')"><div style="font-weight:600;">🔥 ${i+1}. ${escHtml(t.word||t.title||'')} <span style="font-size:11px;color:var(--text2);">${t.heat||''}</span></div><div style="font-size:11px;color:var(--text2);">${t.source||''} · ${t.category||''}</div></div>`).join('');
+    updateInspectorHot(d.topics.slice(0,5));
+  }catch(e){area.innerHTML='<div class="result-card">加载失败</div>';}
+}
+async function refreshHotTopics(){
+  try{
+    const r=await fetch(API+'/hot-topics/refresh');const d=await r.json();
+    showToast(`已从 ${d.from} 获取 ${d.total} 条热点`);
+    loadHotTopics();
+  }catch(e){showToast('刷新失败: '+e.message,'error');}
+}
+function fillTopic(word){
+  document.getElementById('genTopic').value=word;
+  switchMode('create');
+}
+
+// ==================== BRAND BRAIN ====================
+async function loadBrand(){
+  try{
+    const r=await fetch(API+'/brand');const d=await r.json();
+    if(d.name){
+      document.getElementById('brandName').value=d.name||'';
+      document.getElementById('brandSlogan').value=d.slogan||'';
+      document.getElementById('brandPersonality').value=(d.tone?.personality||[]).join(',');
+      document.getElementById('brandAudience').value=d.tone?.audience||'';
+      document.getElementById('brandChip').style.display='flex';
+      document.getElementById('brandChipName').textContent=d.name;
+      document.getElementById('inspBrandName').textContent=d.name;
+      document.getElementById('inspBrandTone').textContent=(d.tone?.personality||[]).join('·')||d.slogan||'品牌已配置';
+    }
+  }catch(e){}
+}
+async function saveBrand(){
+  const name=document.getElementById('brandName').value.trim();
+  if(!name) return showToast('请输入品牌名称','error');
+  await fetch(API+'/brand',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,slogan:document.getElementById('brandSlogan').value.trim(),tone:{personality:document.getElementById('brandPersonality').value.split(',').map(s=>s.trim()).filter(Boolean),audience:document.getElementById('brandAudience').value.trim()}})});
+  showToast('品牌信息已保存'); loadBrand();
+}
+async function analyzeBrandTone(){
+  const samplesText=document.getElementById('brandSamples').value.trim();
+  if(!samplesText) return showToast('请先填写品牌范文','error');
+  const samples=samplesText.split('\n').filter(s=>s.trim());
+  const area=document.getElementById('brandResult');
+  area.style.display='block'; area.innerHTML='<div class="spinner"></div> AI分析中...';
+  try{
+    const r=await fetch(API+'/brand/analyze-tone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({samples})});
+    const d=await r.json();
+    if(d.error){area.innerHTML=d.error;return;}
+    const a=d.analysis||{};
+    area.innerHTML=`<div style="font-weight:600;margin-bottom:8px;">🔬 语调分析结果</div><div style="font-size:12px;"><strong>人格:</strong> ${(a.personality||[]).join('·')||'-'}</div><div style="font-size:12px;margin-top:4px;"><strong>语调:</strong> ${a.voice_style||'-'}</div><div style="font-size:12px;margin-top:4px;"><strong>关键词:</strong> ${(a.keywords||[]).join('、')||'-'}</div><div style="font-size:12px;margin-top:4px;"><strong>受众:</strong> ${a.audience||'-'}</div><div style="font-size:12px;margin-top:4px;color:var(--accent2);">✅ 已自动保存到 Brand Brain</div>`;
+    loadBrand();
+  }catch(e){area.innerHTML='❌ 失败: '+e.message;}
+}
+
+// ==================== INSPECTOR UPDATES ====================
+async function updateInspectorAI(text){
+  if(!text) return;
+  try{
+    const r=await fetch(API+'/detect-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:text})});
+    const d=await r.json();
+    const ring=document.getElementById('inspAiRing');
+    const score=d.score;
+    ring.textContent=score;
+    ring.style.borderColor=score<=30?'var(--accent2)':score<=50?'var(--accent)':score<=70?'var(--warn)':'var(--danger)';
+    document.getElementById('inspAiLabel').textContent=d.level;
+    document.getElementById('inspAiDetail').textContent=`评分 ${score}/100`;
+  }catch(e){}
+}
+function updateInspectorHot(topics){
+  document.getElementById('inspHotTopics').innerHTML=topics.map((t,i)=>`<div class="hot-item" onclick="fillTopic('${escHtml(t.word||t.title||'')}')"><span class="hot-rank">${i+1}</span>${escHtml(t.word||t.title||'').slice(0,12)}</div>`).join('');
+}
+async function loadInspectorHotTopics(){
+  try{const r=await fetch(API+'/hot-topics?limit=5');const d=await r.json();updateInspectorHot(d.topics.slice(0,5));}catch(e){}
+}
+async function loadInspectorSchedule(){
+  try{const r=await fetch(API+'/schedule/stats');const d=await r.json();document.getElementById('inspSchedPending').textContent=d.pending||0;}catch(e){}
+}
+
+// ==================== HELPERS ====================
+function copyText(text){navigator.clipboard.writeText(text).then(()=>showToast('已复制到剪贴板')).catch(()=>showToast('复制失败','error'));}
+function sendToOptimize(text){document.getElementById('optContent').value=text;switchMode('optimize');}
+function sendToCompliance(text){document.getElementById('compContent').value=text;switchMode('compliance');}
+function sendToSchedule(title,body,platform){document.getElementById('schedTitle').value=title;document.getElementById('schedBody').value=body;document.getElementById('schedPlatform').value=platform;switchMode('schedule');}
+function toggleDark(){const isDark=document.body.classList.toggle('dark');document.getElementById('darkBtn').textContent=isDark?'☀️':'🌙';localStorage.setItem('synapse-dark',isDark?'1':'0');}
+function fmtNum(n){if(n>=10000)return (n/10000).toFixed(1)+'w';if(n>=1000)return (n/1000).toFixed(1)+'k';return n.toString();}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function platformIcon(p){const icons={xiaohongshu:'📕',wechat:'💬',zhihu:'🔵',douyin:'🎵',bilibili:'📺',toutiao:'📰',baijiahao:'🔍',weibo:'🔴',csdn:'💻',juejin:'💎',sohu:'🦊',feishu:'📋'};return icons[p]||'📄';}
+</script>
+</body>
+</html>
